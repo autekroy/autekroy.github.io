@@ -22,17 +22,30 @@
             --card-blur: rgba(255, 255, 255, 0.85);
             --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
             --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+            --bg-base: #F2F2F7;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+        /* --- iOS 橡皮筋效果終極修正 --- */
+        html {
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* 禁止 html 滾動 */
+            background-color: var(--bg-base); /* 確保底色一致 */
+            overscroll-behavior: none; /* 禁止瀏覽器默認回彈 */
+        }
+
         body {
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-            background-color: #000;
+            background-color: var(--bg-base);
             color: var(--text-primary);
-            height: 100vh;
+            height: 100%;
+            width: 100%;
+            position: fixed; /* 強制固定 body，防止整體拖動 */
             overflow: hidden;
+            overscroll-behavior: none;
         }
 
         /* --- Animations --- */
@@ -53,7 +66,11 @@
         .animate-item:nth-child(5) { animation-delay: 0.25s; }
 
         /* --- Backgrounds --- */
-        .bg-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+        .bg-container { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: -1; pointer-events: none; 
+            background-color: var(--bg-base); /* Fallback color */
+        }
         .bg-image {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-size: cover; background-position: center;
@@ -104,12 +121,17 @@
 
         /* --- Content --- */
         .content-area {
-            height: 100%; 
-            overflow-y: auto;
-            overscroll-behavior: contain; 
+            /* 使用絕對定位填滿空間，避免依賴 100% height 導致的誤差 */
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow-y: auto; /* 允許垂直滾動 */
+            overflow-x: hidden;
+            overscroll-behavior-y: none; /* 關鍵：內容滾動到底不回彈 */
+            -webkit-overflow-scrolling: touch; /* 平滑滾動 */
             padding: calc(var(--safe-top) + 100px) 20px calc(var(--safe-bottom) + 80px);
-            -webkit-overflow-scrolling: touch;
-            display: none; opacity: 0; transition: opacity 0.4s ease;
+            display: none; 
+            opacity: 0; 
+            transition: opacity 0.4s ease;
         }
         .content-area.active { display: block; opacity: 1; }
 

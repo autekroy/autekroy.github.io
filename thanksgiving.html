@@ -22,30 +22,17 @@
             --card-blur: rgba(255, 255, 255, 0.85);
             --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
             --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
-            --bg-base: #F2F2F7;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        /* --- iOS 橡皮筋效果終極修正 --- */
-        html {
-            height: 100%;
-            width: 100%;
-            overflow: hidden; /* 禁止 html 滾動 */
-            background-color: var(--bg-base); /* 確保底色一致 */
-            overscroll-behavior: none; /* 禁止瀏覽器默認回彈 */
-        }
-
         body {
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-base);
+            background-color: #000;
             color: var(--text-primary);
-            height: 100%;
-            width: 100%;
-            position: fixed; /* 強制固定 body，防止整體拖動 */
+            height: 100vh;
             overflow: hidden;
-            overscroll-behavior: none;
         }
 
         /* --- Animations --- */
@@ -66,11 +53,7 @@
         .animate-item:nth-child(5) { animation-delay: 0.25s; }
 
         /* --- Backgrounds --- */
-        .bg-container { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            z-index: -1; pointer-events: none; 
-            background-color: var(--bg-base); /* Fallback color */
-        }
+        .bg-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
         .bg-image {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-size: cover; background-position: center;
@@ -121,17 +104,12 @@
 
         /* --- Content --- */
         .content-area {
-            /* 使用絕對定位填滿空間，避免依賴 100% height 導致的誤差 */
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            overflow-y: auto; /* 允許垂直滾動 */
-            overflow-x: hidden;
-            overscroll-behavior-y: none; /* 關鍵：內容滾動到底不回彈 */
-            -webkit-overflow-scrolling: touch; /* 平滑滾動 */
+            height: 100%; 
+            overflow-y: auto;
+            overscroll-behavior: contain; 
             padding: calc(var(--safe-top) + 100px) 20px calc(var(--safe-bottom) + 80px);
-            display: none; 
-            opacity: 0; 
-            transition: opacity 0.4s ease;
+            -webkit-overflow-scrolling: touch;
+            display: none; opacity: 0; transition: opacity 0.4s ease;
         }
         .content-area.active { display: block; opacity: 1; }
 
@@ -350,6 +328,7 @@
         <div id="bg-flights" class="bg-image" style="background-image: url('https://images.unsplash.com/photo-1569154941061-e231b4725ef1?q=80&w=1080');"></div>
         <div id="bg-hotels" class="bg-image" style="background-image: url('https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=1080');"></div>
         <div id="bg-guide" class="bg-image" style="background-image: url('https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=1080');"></div>
+        <div id="bg-prep" class="bg-image" style="background-image: url('https://images.unsplash.com/photo-1584810359583-96fc3448beaa?q=80&w=1080');"></div>
         <div class="bg-overlay"></div>
     </div>
 
@@ -532,6 +511,15 @@
                 { name: "Canyon Overlook", tag: "CP值高", desc: "不用爬得半死也能看大景。", info: "💬 **為什麼要去？**\nCP值最高！只要走 20 分鐘，就能看到跟 Angels Landing 一樣壯觀的風景，而且不用抽籤、不用爬懸崖。" },
                 { name: "Watchman Trail", tag: "人少", desc: "避開人潮的好選擇。", info: "💬 **為什麼要去？**\n如果你第一天下午剛到，不想太累，這條步道就在遊客中心旁，可以看夕陽照在 Watchman 山峰上的金光。" },
                 { name: "Court of the Patriarchs", tag: "拍照", desc: "下車就能拍大片。", info: "💬 **為什麼要去？**\n這是一個只要下車走 2 分鐘就能到的觀景台。可以一次拍到三座以聖經人物命名的高峰。" }
+            ]},
+            { category: "🚌 錫安接駁車", content: [
+                { name: "接駁車系統介紹", tag: "必讀", desc: "分為公園內綠線與市區橘線。", info: "錫安國家公園有兩條接駁車路線：\n1. **🟢 綠線 (Zion Canyon Line)**：在公園內部運行，連接遊客中心與各個登山口。\n2. **🟠 橘線 (Springdale Line)**：在 Springdale 鎮上運行，連接各飯店與公園入口。\n\n💡 **轉乘方式：**\n搭橘線到終點站 (Zion Canyon Village)，下車步行通過入口閘門，再走到遊客中心搭乘綠線。" },
+                { name: "🟢 綠線 (Zion Canyon Line)", tag: "園內", desc: "遊客中心 ⇄ Temple of Sinawava", info: "主要站點：\n#1 Visitor Center (起點)\n#3 Canyon Junction\n#5 Zion Lodge (Emerald Pools)\n#6 The Grotto (Angels Landing)\n#9 Temple of Sinawava (The Narrows)\n\n⏰ **時間：**\n通常每 10-15 分鐘一班。早晨人潮眾多，建議 7:00 AM 前抵達。" },
+                { name: "🟠 橘線 (Springdale Line)", tag: "市區", desc: "Springdale ⇄ 公園入口", info: "主要功能：\n免費接送遊客從飯店到公園入口。如果你住在 Springdale，請把車停在飯店，直接搭這班車。\n\n📍 **站點：**\n沿著 Zion Park Blvd 有 9 個站點，Zion Inn 附近就有站牌。" },
+                { name: "站點 #1: Visitor Center", tag: "綠線", desc: "起點、廁所、水站。", info: "這裡是所有綠線接駁車的起點。有大型停車場（通常很早就滿了），還有遊客中心可以諮詢 Ranger、裝水、上廁所。" },
+                { name: "站點 #6: The Grotto", tag: "綠線", desc: "Angels Landing 起點。", info: "要爬 Angels Landing 或 West Rim Trail 的請在這裡下車。這裡也有野餐區和廁所。" },
+                { name: "站點 #9: Temple of Sinawava", tag: "綠線", desc: "The Narrows 起點。", info: "綠線的終點站。下車後沿著 Riverside Walk 走到底，就是 The Narrows 的入口。" },
+                { name: "官方地圖 PDF", tag: "下載", desc: "點擊查看 NPS 官方冬季指南。", info: "🔗 **連結：**\n<a href='https://www.nps.gov/zion/planyourvisit/upload/25-26Winter-InfoGuide.pdf' target='_blank' style='color:blue;text-decoration:underline;'>點此打開 NPS 官方 PDF 地圖</a>\n\n這份指南包含詳細的接駁車地圖、時刻表以及各個步道的開放狀況。" }
             ]},
             { category: "🌲 布萊斯", content: [
                 { name: "Natural Bridge", tag: "拍照", desc: "巨大的天然拱門。", info: "💬 **為什麼要去？**\n雖然叫「橋」，但其實是個侵蝕出來的「拱門」。紅色的岩石拱門框住背後深綠色的松樹林，對比非常強烈，是攝影師的最愛。" },

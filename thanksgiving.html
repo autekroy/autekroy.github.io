@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="感恩節之旅">
+    
+    <!-- Icon -->
+    <link rel="apple-touch-icon" href="https://img.icons8.com/color/480/grand-canyon.png">
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --theme-color: #D35400;
+            --text-primary: #1c1c1e;
+            --text-secondary: #8e8e93;
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+            --card-blur: rgba(255, 255, 255, 0.85);
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            background-color: #000;
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-item {
+            opacity: 0;
+            animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .animate-item:nth-child(1) { animation-delay: 0.05s; }
+        .animate-item:nth-child(2) { animation-delay: 0.1s; }
+        .animate-item:nth-child(3) { animation-delay: 0.15s; }
+        .animate-item:nth-child(4) { animation-delay: 0.2s; }
+        .animate-item:nth-child(5) { animation-delay: 0.25s; }
+
+        /* --- Backgrounds --- */
+        .bg-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+        .bg-image {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            transition: opacity 0.8s ease; opacity: 0; transform: scale(1.05);
+        }
+        .bg-image.active { opacity: 1; transform: scale(1); transition: opacity 0.8s ease, transform 10s linear; }
+        .bg-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.5) 40%, rgba(242,242,247,0.92) 100%);
+            z-index: 0;
+            backdrop-filter: blur(2px);
+        }
+
+        /* --- Header --- */
+        header {
+            padding: calc(var(--safe-top) + 10px) 20px 10px;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border-bottom: 0.5px solid rgba(0,0,0,0.05);
+            position: absolute; top: 0; left: 0; width: 100%; z-index: 10;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            transition: all 0.3s;
+        }
+        
+        .header-left h1 { font-size: 28px; font-weight: 800; margin: 0; letter-spacing: -0.5px; color: #000; }
+        .header-left .subtitle { 
+            font-size: 13px; color: var(--theme-color); font-weight: 700; 
+            margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; 
+            transition: color 0.3s ease;
+        }
+
+        .weather-widget {
+            text-align: right; background: rgba(255,255,255,0.5); padding: 6px 12px; border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: flex-end;
+            border: 1px solid rgba(255,255,255,0.4);
+            transition: opacity 0.3s ease, visibility 0.3s;
+        }
+        .weather-temp { font-size: 20px; font-weight: 700; color: #333; line-height: 1; }
+        .weather-loc { font-size: 10px; color: #666; margin-top: 3px; font-weight: 600; text-transform: uppercase; }
+
+        #countdown-banner {
+            font-size: 11px; font-weight: 600; color: #fff; background: var(--theme-color);
+            padding: 4px 10px; border-radius: 20px; margin-top: 5px; display: inline-block;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); opacity: 0; animation: fadeUp 0.5s 0.5s forwards;
+            transition: background-color 0.3s ease;
+        }
+
+        /* --- Content --- */
+        .content-area {
+            height: 100%; 
+            overflow-y: auto;
+            overscroll-behavior: contain; 
+            padding: calc(var(--safe-top) + 100px) 20px calc(var(--safe-bottom) + 80px);
+            -webkit-overflow-scrolling: touch;
+            display: none; opacity: 0; transition: opacity 0.4s ease;
+        }
+        .content-area.active { display: block; opacity: 1; }
+
+        /* --- Weather Chart --- */
+        .weather-detail-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 24px; padding: 20px 15px; margin-bottom: 20px;
+            color: white; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
+            position: relative; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .wd-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; padding: 0 5px; }
+        .wd-title { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .wd-info { text-align: right; font-size: 12px; font-weight: 600; opacity: 0.9; }
+        
+        .wd-chart-container { width: 100%; height: 150px; position: relative; margin-top: 10px; }
+        .wd-chart-svg { width: 100%; height: 100%; overflow: visible; display: block; }
+        .chart-area { fill: rgba(255,255,255,0.15); }
+        .chart-line {
+            fill: none; stroke: white; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+            filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.1));
+        }
+        .chart-dot { fill: white; stroke: rgba(0,0,0,0.1); stroke-width: 2px; }
+        .chart-text { font-size: 11px; fill: white; font-weight: 700; text-anchor: middle; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .chart-label { font-size: 10px; fill: rgba(255,255,255,0.8); text-anchor: middle; font-weight: 500; }
+
+        /* --- Scrollers --- */
+        .day-scroller-container {
+            position: sticky; top: 0; margin: -10px -20px 20px; padding: 15px 20px 10px;
+            background: rgba(255,255,255,0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            z-index: 5; border-bottom: 0.5px solid rgba(0,0,0,0.05);
+            mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+        }
+        .day-scroller { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; scrollbar-width: none; }
+        .day-scroller::-webkit-scrollbar { display: none; }
+        
+        .day-chip {
+            flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-width: 68px; height: 64px; background: rgba(255,255,255,0.8); border-radius: 18px;
+            font-size: 12px; color: var(--text-secondary); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: var(--shadow-sm); border: 1px solid rgba(255,255,255,0.5);
+        }
+        .day-chip span.d-date { font-size: 20px; font-weight: 800; color: #1c1c1e; margin-bottom: 2px; }
+        .day-chip span.d-week { font-weight: 500; font-size: 11px; opacity: 0.8; }
+        
+        .day-chip.active {
+            background: var(--theme-color); color: white; 
+            box-shadow: 0 8px 20px -5px var(--theme-color); 
+            transform: translateY(-2px) scale(1.05); border-color: transparent;
+        }
+        .day-chip.active span.d-date { color: white; }
+        
+        .guide-chip {
+            flex: 0 0 auto; padding: 0 20px; height: 44px; 
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.8); border-radius: 22px;
+            font-size: 14px; font-weight: 700; color: var(--text-secondary);
+            box-shadow: var(--shadow-sm); border: 1px solid rgba(255,255,255,0.5); transition: all 0.3s;
+        }
+        .guide-chip.active { 
+            background: var(--theme-color); color: white; 
+            box-shadow: 0 6px 15px -4px var(--theme-color); transform: translateY(-1px); 
+        }
+
+        /* --- New Compact Map Button --- */
+        .map-btn-compact {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 14px; margin-bottom: 15px;
+            background: rgba(255,255,255,0.6); border-radius: 18px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5);
+            color: var(--theme-color); font-weight: 700; font-size: 15px;
+            text-decoration: none; box-shadow: var(--shadow-sm);
+            transition: transform 0.2s, background 0.2s;
+        }
+        .map-btn-compact:active { transform: scale(0.98); background: rgba(255,255,255,0.8); }
+
+        /* --- Card & Items --- */
+        .card {
+            background: var(--card-blur); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border-radius: 24px; padding: 0; margin-bottom: 16px;
+            box-shadow: var(--shadow-md); overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+
+        .place-item {
+            padding: 22px 20px; border-bottom: 1px solid rgba(0,0,0,0.05); position: relative;
+            transition: background 0.2s; cursor: pointer;
+        }
+        .place-item:active { background: rgba(0,0,0,0.03); }
+        .place-item:last-child { border-bottom: none; }
+        .place-item::after {
+            content: '›'; position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+            font-size: 22px; color: #c7c7cc; font-weight: 600;
+        }
+        .place-item.no-arrow::after { display: none; }
+
+        .place-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-right: 20px; }
+        .place-name { font-weight: 700; font-size: 18px; color: #1c1c1e; flex: 1; letter-spacing: -0.3px; }
+        
+        .place-tag { 
+            font-size: 11px; background: var(--theme-color); padding: 5px 10px; border-radius: 10px; 
+            color: white; font-weight: 700; white-space: nowrap; margin-left: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .place-tag.secondary { background: #e5e5ea; color: #666; box-shadow: none; }
+        .place-tag.highlight { background: #007AFF; color: white; box-shadow: 0 2px 6px rgba(0,122,255,0.3); }
+        
+        .place-desc { font-size: 15px; color: #666; line-height: 1.5; margin: 0; padding-right: 15px; }
+        .hotel-date { font-size: 13px; color: #8e8e93; margin-top: 6px; display: block; font-weight: 600; }
+
+        /* --- Packing List Styles --- */
+        .packing-header {
+            padding: 20px 20px 10px;
+        }
+        .progress-container {
+            width: 100%; height: 8px; background: #e5e5ea; border-radius: 4px; overflow: hidden; margin-top: 10px;
+        }
+        .progress-bar {
+            height: 100%; background: #34C759; width: 0%; transition: width 0.3s ease;
+        }
+        .progress-text {
+            font-size: 13px; color: #8e8e93; font-weight: 600; margin-top: 8px; display: flex; justify-content: space-between;
+        }
+        
+        .checkbox-item {
+            display: flex; align-items: center; padding: 16px 20px; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05);
+            transition: background 0.2s;
+        }
+        .checkbox-item:last-child { border-bottom: none; }
+        .checkbox-item:active { background: rgba(0,0,0,0.02); }
+        
+        .custom-checkbox {
+            width: 24px; height: 24px; border-radius: 6px; border: 2px solid #c7c7cc; margin-right: 15px;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .checkbox-item.checked .custom-checkbox {
+            background: #34C759; border-color: #34C759;
+        }
+        .checkbox-item.checked .place-name {
+            color: #aeaeb2; text-decoration: line-through;
+        }
+        .check-icon { color: white; opacity: 0; transform: scale(0.5); transition: all 0.2s; }
+        .checkbox-item.checked .check-icon { opacity: 1; transform: scale(1); }
+
+        /* --- Flight & Shuttle --- */
+        .flight-time-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin: 18px 0; padding: 12px 0; border-top: 1px dashed rgba(0,0,0,0.1); border-bottom: 1px dashed rgba(0,0,0,0.1);
+        }
+        .flight-time-col { text-align: center; flex: 1; }
+        .ft-label { font-size: 11px; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600; }
+        .ft-time { font-size: 22px; font-weight: 800; color: #1c1c1e; font-variant-numeric: tabular-nums; }
+        .ft-icon { color: #d1d1d6; margin: 0 10px; }
+        
+        .lounge-info {
+            background: #f2f2f7; padding: 14px; border-radius: 16px; margin-top: 12px; display: flex; gap: 12px; align-items: flex-start;
+        }
+        .lounge-text { font-size: 13px; color: #444; line-height: 1.5; font-weight: 500; }
+        .lounge-badge { background: #002663; color: white; font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 800; display: inline-block; margin-bottom: 4px; }
+        
+        .shuttle-block { padding: 24px; background: transparent; }
+        .shuttle-title { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--theme-color); margin-bottom: 16px; font-size: 16px; }
+        .shuttle-container { background: rgba(255,255,255,0.6); border-radius: 16px; padding: 16px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.5); }
+
+        /* --- Modal --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3);
+            z-index: 100; opacity: 0; visibility: hidden; transition: all 0.3s;
+            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+        }
+        .modal-overlay.open { opacity: 1; visibility: visible; }
+        .modal-sheet {
+            position: absolute; bottom: 0; left: 0; width: 100%; background: #fff;
+            border-radius: 30px 30px 0 0; padding: 30px 25px 60px;
+            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+        }
+        .modal-overlay.open .modal-sheet { transform: translateY(0); }
+        .modal-handle { width: 40px; height: 5px; background: #e5e5ea; border-radius: 10px; margin: -10px auto 30px; }
+        .modal-title { font-size: 26px; font-weight: 800; margin-bottom: 15px; color: #000; line-height: 1.2; }
+        .modal-desc { font-size: 17px; color: #3a3a3c; line-height: 1.6; white-space: pre-wrap; font-weight: 400; }
+        .modal-close-btn {
+            position: absolute; top: 25px; right: 25px; background: #f2f2f7; border: none; 
+            width: 32px; height: 32px; border-radius: 50%; font-size: 20px; 
+            color: #3c3c43; display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+
+        /* --- Tab Bar --- */
+        .tab-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: rgba(255,255,255,0.85); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border-top: 0.5px solid rgba(0,0,0,0.15); display: flex; justify-content: space-around;
+            padding-bottom: var(--safe-bottom); height: calc(60px + var(--safe-bottom)); z-index: 20;
+        }
+        .tab-item {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #999; font-size: 10px; gap: 4px; cursor: pointer; transition: all 0.2s;
+        }
+        .tab-item.active { color: var(--theme-color); transform: translateY(-2px); }
+        .tab-item.active svg { stroke-width: 2.5px; }
+
+        .btn-action {
+            display: inline-flex; align-items: center; gap: 8px; background: #f2f2f7; color: var(--theme-color); 
+            padding: 10px 20px; border-radius: 14px; font-size: 15px; font-weight: 600; text-decoration: none; margin-top: 15px;
+            transition: transform 0.2s;
+        }
+        .btn-action:active { transform: scale(0.96); opacity: 0.8; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-container">
+        <div id="bg-itinerary" class="bg-image active"></div>
+        <div id="bg-flights" class="bg-image" style="background-image: url('https://images.unsplash.com/photo-1569154941061-e231b4725ef1?q=80&w=1080');"></div>
+        <div id="bg-hotels" class="bg-image" style="background-image: url('https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=1080');"></div>
+        <div id="bg-guide" class="bg-image" style="background-image: url('https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=1080');"></div>
+        <div class="bg-overlay"></div>
+    </div>
+
+    <header>
+        <div class="header-left">
+            <h1 id="header-title">行程</h1>
+            <div class="subtitle" id="header-subtitle">Overview</div>
+            <div id="countdown-banner">即將出發 ✈️</div>
+        </div>
+        <div class="weather-widget">
+            <span class="weather-temp" id="current-temp">--°</span>
+            <span class="weather-loc" id="current-loc">LOADING</span>
+        </div>
+    </header>
+
+    <!-- TAB 1: ITINERARY -->
+    <div id="tab-itinerary" class="content-area active">
+        <div class="day-scroller-container"><div class="day-scroller"></div></div>
+        <div id="day-content"></div>
+    </div>
+
+    <!-- TAB 2: FLIGHTS -->
+    <div id="tab-flights" class="content-area">
+        <div class="card animate-item">
+            <div class="place-item no-arrow">
+                <div class="place-header"><span class="place-name">SFO ➝ LAS</span><span class="place-tag secondary">11/25 去程</span></div>
+                <p class="place-desc"><strong>西南航空 WN 3237</strong><br>Terminal 1 (Harvey Milk)</p>
+                <div class="flight-time-row">
+                    <div class="flight-time-col"><div class="ft-label">登機 Board</div><div class="ft-time" style="color:#2980b9">09:50</div></div>
+                    <div class="flight-time-col"><div class="ft-label">起飛 Dep</div><div class="ft-time">10:20</div></div>
+                    <i data-lucide="arrow-right" size="16" class="ft-icon"></i>
+                    <div class="flight-time-col"><div class="ft-label">抵達 Arr</div><div class="ft-time">11:50</div></div>
+                </div>
+                <div class="lounge-info">
+                    <div style="min-width:20px;"><i data-lucide="armchair" size="20" color="#002663"></i></div>
+                    <div class="lounge-text"><span class="lounge-badge">美國運通貴賓室</span><br><strong>SFO: Terminal 3 (F Gates)</strong><br>*Southwest 在 T1。T1 與 T3 已有 Airside 連通道，步行約 10-15 分鐘，不需重過安檢。</div>
+                </div>
+                <a href="https://www.flightaware.com/live/flight/SWA3237" target="_blank" class="btn-action" style="background:#f0f8ff; color:#2980b9"><i data-lucide="radar" size="16"></i> 狀態追蹤</a>
+            </div>
+        </div>
+        <div class="card animate-item">
+            <div class="place-item no-arrow">
+                <div class="place-header">
+                    <span class="place-name">LAS ➝ SFO</span>
+                    <span class="place-tag secondary">12/1 回程</span>
+                </div>
+                <p class="place-desc"><strong>西南航空 WN 2487</strong><br>Terminal 1 (Gates B/C)</p>
+                <div class="flight-time-row">
+                    <div class="flight-time-col"><div class="ft-label">登機 Board</div><div class="ft-time" style="color:#2980b9">14:45</div></div>
+                    <div class="flight-time-col"><div class="ft-label">起飛 Dep</div><div class="ft-time">15:15</div></div>
+                    <i data-lucide="arrow-right" size="16" class="ft-icon"></i>
+                    <div class="flight-time-col"><div class="ft-label">抵達 Arr</div><div class="ft-time">16:50</div></div>
+                </div>
+                <div class="lounge-info">
+                    <div style="min-width:20px;"><i data-lucide="armchair" size="20" color="#002663"></i></div>
+                    <div class="lounge-text"><span class="lounge-badge">美國運通貴賓室</span><br><strong>LAS: Concourse D</strong><br>*需搭乘 Blue Line Tram 前往 D Gates (安檢區內)。</div>
+                </div>
+                <a href="https://www.flightaware.com/live/flight/SWA2487" target="_blank" class="btn-action" style="background:#f0f8ff; color:#2980b9"><i data-lucide="radar" size="16"></i> 狀態追蹤</a>
+            </div>
+        </div>
+        <div class="card animate-item">
+            <div class="place-item no-arrow">
+                <span class="place-name">LAS 機場租車中心</span>
+                <p class="place-desc" style="margin-top:5px;"><strong>取車：</strong> 11/25 12:30 PM<br><strong>還車：</strong> 11/28 下午 (Vegas)</p>
+                <a href="https://www.google.com/maps/search/?api=1&query=McCarran+Rent-A-Car+Center" target="_blank" class="btn-action" style="background:#f0f8ff; color:#2980b9"><i data-lucide="navigation"></i> 導航去取車</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: HOTELS -->
+    <div id="tab-hotels" class="content-area">
+        <div class="card animate-item">
+            <div class="place-item" onclick="openModal('Zion Inn', 'Springdale 溫馨住宿', '距離錫安公園入口僅幾分鐘車程。附近有不錯的餐廳和超市。')">
+                <div class="place-header"><span class="place-name">Zion Inn</span><span class="place-tag highlight" style="background:#8e44ad">2 晚</span></div>
+                <span class="hotel-date">11/25 (二) - 11/27 (四)</span>
+                <p class="place-desc">📍 1215 Zion Park Blvd, Springdale</p>
+                <a href="https://www.google.com/maps/search/?api=1&query=Zion+Inn,+1215+Zion+Park+Blvd,+Springdale,+UT" target="_blank" class="btn-action" style="background:#f8f4fc; color:#8e44ad" onclick="event.stopPropagation()"><i data-lucide="map-pin"></i> 導航</a>
+            </div>
+        </div>
+        <div class="card animate-item">
+            <div class="place-item" onclick="openModal('Ruby\'s Inn', 'Bryce Canyon 歷史旅館', '非常有西部牛仔風情的旅館。感恩節晚餐就在這裡吃！旁邊有大超市。')">
+                <div class="place-header"><span class="place-name">Ruby's Inn (Bryce)</span><span class="place-tag highlight" style="background:#8e44ad">1 晚</span></div>
+                <span class="hotel-date">11/27 (四) - 11/28 (五)</span>
+                <p class="place-desc">📍 26 S Main St, Bryce Canyon City</p>
+                <a href="https://www.google.com/maps/search/?api=1&query=Best+Western+Plus+Ruby's+Inn,+26+South+Main+Street,+Bryce+Canyon+City,+UT" target="_blank" class="btn-action" style="background:#f8f4fc; color:#8e44ad" onclick="event.stopPropagation()"><i data-lucide="map-pin"></i> 導航</a>
+            </div>
+        </div>
+        <div class="card animate-item">
+            <div class="place-item" onclick="openModal('Holiday Inn Express', 'Vegas 住宿', '位於 Tropicana 大道，離 MGM Grand 很近，方便去搭 Monorail 或走到 Strip 南端。附早餐！')">
+                <div class="place-header"><span class="place-name">Holiday Inn Express</span><span class="place-tag highlight" style="background:#8e44ad">3 晚</span></div>
+                <span class="hotel-date">11/28 (五) - 12/1 (一)</span>
+                <p class="place-desc">📍 175 East Tropicana Ave, Vegas</p>
+                <a href="https://www.google.com/maps/search/?api=1&query=Holiday+Inn+Express+Las+Vegas+-+South,+175+East+Tropicana+Ave,+Las+Vegas,+NV" target="_blank" class="btn-action" style="background:#f8f4fc; color:#8e44ad" onclick="event.stopPropagation()"><i data-lucide="map-pin"></i> 導航</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: GUIDE (Includes Prep) -->
+    <div id="tab-guide" class="content-area">
+        <div class="day-scroller-container"><div class="day-scroller" id="guide-scroller"></div></div>
+        <div id="guide-content"></div>
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="detail-modal" onclick="closeModal()">
+        <div class="modal-sheet" onclick="event.stopPropagation()">
+            <div class="modal-handle"></div>
+            <button class="modal-close-btn" onclick="closeModal()">×</button>
+            <div class="modal-title" id="modal-title">Title</div>
+            <div class="modal-desc" id="modal-desc">Description</div>
+        </div>
+    </div>
+
+    <!-- TAB BAR -->
+    <nav class="tab-bar">
+        <div class="tab-item active" onclick="switchTab('itinerary', this)"><i data-lucide="map" size="24"></i><span>行程</span></div>
+        <div class="tab-item" onclick="switchTab('flights', this)"><i data-lucide="plane" size="24"></i><span>交通</span></div>
+        <div class="tab-item" onclick="switchTab('hotels', this)"><i data-lucide="bed" size="24"></i><span>住宿</span></div>
+        <div class="tab-item" onclick="switchTab('guide', this)"><i data-lucide="book-open" size="24"></i><span>指南</span></div>
+    </nav>
+
+    <script>
+        lucide.createIcons();
+        let currentHourlyTemps = [];
+
+        // --- DATA ---
+        const daysData = [
+            { date: "11/25", fullDate: "2025-11-25", week: "週二", title: "前往錫安", color: "#D35400", bgImg: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=1080", weatherLoc: "Springdale", coords: "37.188,-112.998", mapUrl: "https://www.google.com/maps/dir/Harry+Reid+International+Airport/Costco+Wholesale,+Saint+George/Zion+National+Park+Visitor+Center/Zion+Inn,+Zion+Park+Boulevard,+Springdale,+UT", content: [
+                { name: "抵達賭城 & 取車", desc: "LAS 機場租車中心取車。", tag: "12:30 PM", info: "取車檢查：備胎、工具、空調。" },
+                { name: "St. George 補給", desc: "Costco/Walmart 買水、早餐。", tag: "2:30 PM", info: "建議購買：整箱水、能量棒、水果、簡易微波食品。" },
+                { name: "Zion Visitor Center", desc: "蓋印章 (5PM 關)。", tag: "4:30 PM", info: "詢問 The Narrows 水位狀況。" },
+                { name: "Zion Inn 住宿", desc: "鎮上晚餐，早點休息。", tag: "6:00 PM", info: "推薦：Thai Sapa 或 Oscar's Cafe。" }
+            ]},
+            { date: "11/26", fullDate: "2025-11-26", week: "週三", title: "錫安國家公園", color: "#27AE60", bgImg: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1080", weatherLoc: "Zion Park", coords: "37.298,-113.026", mapUrl: "https://www.google.com/maps/dir/Zion+Inn,+Zion+Park+Boulevard,+Springdale,+UT/Zion+National+Park+Visitor+Center/The+Grotto+Picnic+Area,+Zion+National+Park,+UT/Temple+of+Sinawava/Canyon+Overlook+Trail,+Zion-Mount+Carmel+Highway,+Springdale,+UT", shuttle: true, content: [
+                { name: "搭乘接駁車", desc: "目標第一班車！", tag: "7:00 AM", info: "橘線轉綠線。" },
+                { name: "Angels Landing", desc: "綠線 #6 The Grotto。", tag: "8:00 AM", info: "走 West Rim Trail 到 Scout Lookout。" },
+                { name: "Riverside Walk", desc: "通往 Narrows 的平緩步道。", tag: "輕鬆", info: "沿著維琴河的平緩步道，通往 Narrows 入口。" },
+                { name: "The Narrows", desc: "綠線 #9 Temple of Sinawava。", tag: "11:00 AM", info: "河濱步道走到底。" },
+                { name: "Emerald Pools", desc: "綠線 #5 Zion Lodge。", tag: "2:00 PM", info: "Lower Pool 有瀑布水簾。" },
+                { name: "Canyon Overlook", desc: "⚠️ 需開車。過隧道後停車。", tag: "5:00 PM", info: "看全景最佳點。" },
+                { name: "Pa'rus Trail", desc: "看 The Watchman 日落最美。", tag: "日落", info: "唯一可騎自行車的步道，視野開闊。" }
+            ]},
+            { date: "11/27", fullDate: "2025-11-27", week: "週四", title: "布萊斯峽谷", color: "#C0392B", bgImg: "https://images.unsplash.com/photo-1546587348-d12660c30c50?q=80&w=1080", weatherLoc: "Bryce Canyon", coords: "37.628,-112.167", mapUrl: "https://www.google.com/maps/dir/Springdale+Zion+Inn,+1215+Zion+Park+Blvd,+Springdale,+UT/Bryce+Canyon+National+Park+Visitor+Center/Sunset+Point,+Bryce+Canyon,+UT/Inspiration+Point,+Bryce+Canyon,+UT/Best+Western+Plus+Ruby's+Inn,+South+Main+Street,+Bryce+Canyon+City,+UT", content: [
+                { name: "12 號景觀公路", desc: "風景絕美但彎曲。", tag: "9:00 AM", info: "經過 Red Canyon。" },
+                { name: "Natural Bridge", desc: "巨大的紅色天然拱門。", tag: "拍照", info: "位於景觀公路中段，色彩對比強烈。" },
+                { name: "Bryce 觀景台", desc: "遊客中心 ➔ Sunset ➔ Inspiration。", tag: "12:00 PM", info: "看 Hoodoos 石俑。" },
+                { name: "Queens Garden", desc: "走入石林底部。", tag: "必走", info: "連接 Navajo Loop 的最佳選擇。" },
+                { name: "Navajo Loop", desc: "走入峽谷看雷神之鎚。", tag: "2:00 PM", info: "著名的 Wall Street 區段。" },
+                { name: "Rainbow Point", desc: "公路盡頭的最高點。", tag: "至高點", info: "海拔 9100 英尺，俯瞰整個峽谷。" },
+                { name: "感恩節晚餐", desc: "入住 Ruby's Inn。", tag: "6:00 PM", info: "Cowboy Buffet 或自備大餐。" }
+            ]},
+            { date: "11/28", fullDate: "2025-11-28", week: "週五", title: "火焰谷 & 賭城", color: "#8E44AD", bgImg: "https://images.unsplash.com/photo-1548954047-3f42a6776b62?q=80&w=1080", weatherLoc: "Las Vegas", coords: "36.169,-115.139", mapUrl: "https://www.google.com/maps/dir/Best+Western+Plus+Ruby's+Inn/Valley+of+Fire+State+Park/Sahara+Las+Vegas", content: [
+                { name: "Valley of Fire", desc: "火焰谷州立公園。", tag: "10:00 AM", info: "必看 Fire Wave。" },
+                { name: "抵達 Vegas & 還車", desc: "先放行李再還車。", tag: "3:00 PM", info: "Holiday Inn Check-in。" },
+                { name: "Magic Mike Live", desc: "Sahara Hotel。", tag: "10:00 PM", info: "提早入場。" }
+            ]},
+            { date: "11/29", fullDate: "2025-11-29", week: "週六", title: "賭城大秀", color: "#F1C40F", bgImg: "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?q=80&w=1080", weatherLoc: "Las Vegas", coords: "36.169,-115.139", mapUrl: "https://www.google.com/maps/search/Las+Vegas+Strip", content: [
+                { name: "飯店巡禮", desc: "Bellagio, Venetian。", tag: "白天", info: "水舞、運河。" },
+                { name: "MJ One", desc: "Mandalay Bay。", tag: "6:30 PM", info: "太陽馬戲團經典。" },
+                { name: "X Country", desc: "Harrah's。", tag: "10:00 PM", info: "上空鄉村歌舞。" }
+            ]},
+            { date: "11/30", fullDate: "2025-11-30", week: "週日", title: "最後探索", color: "#2980B9", bgImg: "https://images.unsplash.com/photo-1581351123004-757980748d20?q=80&w=1080", weatherLoc: "Las Vegas", coords: "36.169,-115.139", mapUrl: "https://www.google.com/maps/search/Fremont+Street+Experience", content: [
+                { name: "Fremont Street", desc: "舊城區天幕秀。", tag: "晚間", info: "氣氛狂野，LED 天幕。" },
+                { name: "伴手禮", desc: "M&M, Coca-Cola。", tag: "自由", info: "最後採買。" }
+            ]},
+            { date: "12/1", fullDate: "2025-12-01", week: "週一", title: "返程", color: "#7F8C8D", bgImg: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1080", weatherLoc: "SFO", coords: "37.621,-122.379", mapUrl: "https://www.google.com/maps/dir/Holiday+Inn+Express/Harry+Reid+International+Airport", content: [
+                { name: "前往機場", desc: "搭 Uber/Lyft。", tag: "回程", info: "預留安檢時間。" },
+                { name: "飛回 SFO", desc: "WN 2487。", tag: "飛行", info: "收心上班！" }
+            ]}
+        ];
+
+        const guideData = [
+            { category: "⛰️ 錫安", content: [
+                { name: "Checkerboard Mesa", tag: "地質", desc: "像棋盤一樣的岩山。", info: "💬 **為什麼要去？**\n這是東側入口最醒目的地標。岩石表面因為風蝕和凍融作用，形成了垂直和水平的溝槽，看起來就像巨大的棋盤。\n\n📍 **位置：**\n東側入口收費站剛進來就會看到。" },
+                { name: "Kolob Canyons", tag: "秘境", desc: "人少景美的紅色手指。", info: "💬 **為什麼要去？**\n這裡不在主峽谷區，而是在公園西北角（I-15 公路旁）。遊客非常少，巨大的紅色納瓦霍砂岩像手指一樣伸向天空，非常壯觀。\n\n🚗 **交通：**\n需要開車前往，無法從主峽谷搭 Shuttle 到達。" },
+                { name: "地質起源", tag: "必讀", desc: "古代沙丘變成的紅色巨岩。", info: "💬 **簡單說：**\n這裡以前是像撒哈拉沙漠一樣的超大沙坑！後來變成了石頭，又被河水切蛋糕一樣切開，就變成了現在壯觀的樣子。\n\n🤓 **冷知識：**\n那些巨大的紅色岩壁，其實是1.5億年前的一個超級大沙漠。沙子一層層堆疊，最後變成了石頭。" },
+                { name: "Angels Landing", tag: "心跳加速", desc: "心跳漏一拍的挑戰！", info: "💬 **為什麼要去？**\n挑戰你的膽量極限！抓著鐵鍊走在懸崖邊，心跳加速但風景無敵。\n\n⚠️ **注意：**\n懼高症患者請三思，或者在 Scout Lookout 吃瓜看別人爬就好。" },
+                { name: "The Narrows", tag: "獨特體驗", desc: "走進河裡去冒險。", info: "💬 **為什麼要去？**\n這不是「看」峽谷，而是「走進」峽谷裡。腳踩在水裡，抬頭是千尺高的一線天，這種體驗全世界沒幾個地方有。\n\n🎒 **裝備：**\n冬天水溫極低，一定要租 dry suit (乾式防寒衣)。" },
+                { name: "Emerald Pools", tag: "輕鬆", desc: "去看瀑布水簾洞。", info: "💬 **為什麼要去？**\n這是一條很溫柔的步道。Lower Pool 有個水簾洞，你可以走到瀑布後面，很適合拍有意境的照片。" },
+                { name: "Canyon Overlook", tag: "CP值高", desc: "不用爬得半死也能看大景。", info: "💬 **為什麼要去？**\nCP值最高！只要走 20 分鐘，就能看到跟 Angels Landing 一樣壯觀的風景，而且不用抽籤、不用爬懸崖。" },
+                { name: "Watchman Trail", tag: "人少", desc: "避開人潮的好選擇。", info: "💬 **為什麼要去？**\n如果你第一天下午剛到，不想太累，這條步道就在遊客中心旁，可以看夕陽照在 Watchman 山峰上的金光。" },
+                { name: "Court of the Patriarchs", tag: "拍照", desc: "下車就能拍大片。", info: "💬 **為什麼要去？**\n這是一個只要下車走 2 分鐘就能到的觀景台。可以一次拍到三座以聖經人物命名的高峰。" }
+            ]},
+            { category: "🌲 布萊斯", content: [
+                { name: "Natural Bridge", tag: "拍照", desc: "巨大的天然拱門。", info: "💬 **為什麼要去？**\n雖然叫「橋」，但其實是個侵蝕出來的「拱門」。紅色的岩石拱門框住背後深綠色的松樹林，對比非常強烈，是攝影師的最愛。" },
+                { name: "Rainbow Point", tag: "至高點", desc: "整個公園的最高點。", info: "💬 **為什麼要去？**\n位於景觀公路的盡頭（海拔 9100 英尺）。從這裡可以回望整個布萊斯露天劇場，天氣好甚至能看到亞利桑那州。\n\n🧥 **注意：**\n這裡通常比遊客中心更冷，風也更大。" },
+                { name: "Mossy Cave", tag: "秘境", desc: "有瀑布的小步道。", info: "💬 **為什麼要去？**\n這條步道不在公園收費站內（位於 12 號公路上）。這裡有一條小溪和瀑布（冬天可能結冰），還有一個長滿苔蘚的洞穴，非常特別。" },
+                { name: "地質起源", tag: "必讀", desc: "被冰雪鑿出的露天劇場。", info: "💬 **簡單說：**\n這裡的石頭長得像一群站立的人，叫做 Hoodoos。傳說是被變成石頭的古代人，其實是冰雪雕刻出來的傑作。\n\n🤓 **冷知識：**\n水滲進縫隙，晚上結冰膨脹把石頭撐開，這過程重複了幾百萬次。" },
+                { name: "Sunset Point", tag: "熱門", desc: "看雷神之鎚的最佳位置。", info: "💬 **為什麼要去？**\n雖然叫日落點，但其實任何時候來都美。這裡往下看，石俑最密集，那個著名的「雷神之鎚」就在正下方。" },
+                { name: "Inspiration Point", tag: "壯觀", desc: "像羅馬競技場一樣壯觀。", info: "💬 **為什麼要去？**\n這裡沒有步道往下走，所以視野沒有遮擋。你會感覺自己站在一個巨大的羅馬競技場邊緣，看著底下的奇岩怪石。" },
+                { name: "Navajo Loop", desc: "走進「華爾街」。", info: "💬 **為什麼要去？**\n這是布萊斯最經典的步道。你會走進一個叫「華爾街」的峽谷，兩邊的岩壁高聳入雲，只有幾棵倔強的松樹長在那裡。" },
+                { name: "Queens Garden", tag: "有趣", desc: "去找維多利亞女王。", info: "💬 **為什麼要去？**\n這條路比較平緩，可以讓你近距離摸到那些石柱。終點有一座石像長得超像維多利亞女王（雖然需要一點想像力😆）。" }
+            ]},
+            { category: "🔥 火焰谷", content: [
+                { name: "Fire Wave", tag: "網紅", desc: "像培根一樣的波浪岩。", info: "💬 **為什麼要去？**\n這是公園最著名的景點。紅白相間的條紋岩石，像海浪一樣起伏。夕陽時分顏色最鮮豔，隨便拍都是大片。\n\n⚠️ **注意：**\n步道雖然不長，但完全無遮蔽，請帶足夠的水。" },
+                { name: "White Domes", tag: "電影", desc: "色彩豐富的狹縫峽谷。", info: "💬 **為什麼要去？**\n這裡曾經是電影《星艦迷航記》的拍攝地。步道會經過一個小型的狹縫峽谷 (Slot Canyon)，岩石顏色從白色、黃色到紅色都有，非常夢幻。" },
+                { name: "Elephant Rock", tag: "奇岩", desc: "真的像一頭大象！", info: "💬 **為什麼要去？**\n就在東側入口路邊。這塊紅岩經過風化，長得跟大象一模一樣，長長的鼻子連著地面，非常可愛。" },
+                { name: "Mouse's Tank", tag: "歷史", desc: "尋找古代岩畫。", info: "💬 **為什麼要去？**\n這是一條沙地步道。沿途的黑色岩壁上刻滿了幾千年前原住民留下的岩畫 (Petroglyphs)。仔細找找，你能看到像羊、人手印的圖案。" }
+            ]},
+            { category: "🎰 賭城地標", content: [
+                { name: "The Sphere", tag: "必看", desc: "盯著你看的巨型球體。", info: "💬 **為什麼要去？**\n這是目前拉斯維加斯最火的地標！世界上最大的球型 LED 螢幕。它會變成巨大的表情符號、眼球、或月球。最佳觀賞點是在單軌電車上或附近的停車場。" },
+                { name: "Welcome Sign", tag: "打卡", desc: "沒拍這張不算來過賭城。", info: "💬 **為什麼要去？**\n那塊 'Welcome to Fabulous Las Vegas' 的招牌。位於 Strip 的最南端。\n\n💡 **小撇步：**\n排隊拍照的人通常很多。如果你不想排隊，可以站在旁邊斜一點的角度拍，效果也不錯！" },
+                { name: "High Roller", tag: "摩天輪", desc: "全球最高的摩天輪之一。", info: "💬 **為什麼要去？**\n轉一圈要 30 分鐘。你可以包下一個車廂，甚至有附帶調酒師的車廂 (Happy Half Hour)，邊喝酒邊看夜景。" },
+                { name: "Area15", tag: "酷", desc: "走進異次元超市。", info: "💬 **為什麼要去？**\n這裡有著名的 Omega Mart（喵喵超市）。看起來像普通超市，但打開冰箱門會通往異世界。充滿了互動藝術和迷幻裝置，非常適合年輕人。" },
+                { name: "Bellagio", tag: "經典", desc: "電影裡的經典水舞。", info: "💬 **為什麼要去？**\n這就是電影《瞞天過海》最後大家看水舞的地方。那種優雅的氛圍是賭城其他地方學不來的。記得進去看溫室花園，那些花都是真的！" },
+                { name: "Venetian", tag: "威尼斯", desc: "假天空做得太像真的。", info: "💬 **為什麼要去？**\n雖然很浮誇，但那個室內運河和假天空真的做得太好了。在運河邊聽船夫唱義大利歌劇，氣氛滿分。" },
+                { name: "Circa Resort", tag: "大人限定", desc: "沒有小孩的快樂天堂。", info: "💬 **為什麼要去？**\n這是 Downtown 最新的賭場，而且不準小孩進去！頂樓的 Stadium Swim 有超大螢幕可以邊游泳邊看球賽，非常美式風格。" },
+                { name: "Resorts World", tag: "吃貨", desc: "亞洲美食大集合。", info: "💬 **為什麼要去？**\n如果你懷念亞洲食物，這裡一定要來。Famous Foods Street Eats 集合了各種亞洲米其林小吃，像高級版的夜市。" },
+                { name: "The STRAT", tag: "刺激", desc: "在塔頂尖叫。", info: "💬 **為什麼要去？**\n如果你膽子大，頂樓有懸空在塔外的遊樂設施。如果膽子小，去觀景台喝杯酒看夜景也很棒。" },
+                { name: "Red Rock", tag: "放鬆", desc: "遠離塵囂的度假感。", info: "💬 **為什麼要去？**\n這是在地有錢人去的地方。離 Strip 有段距離，靠近紅岩峽谷，氛圍非常放鬆高級，沒有遊客的喧囂。" },
+                { name: "Wynn", tag: "花園", desc: "走進愛麗絲夢遊仙境。", info: "💬 **為什麼要去？**\n走進 Wynn 就像走進一個巨大的花園。每晚的 Lake of Dreams 水幕秀雖然怪怪的（有巨型青蛙唱歌），但免費又特別。" },
+                { name: "Cosmopolitan", tag: "網美", desc: "住在水晶燈裡。", info: "💬 **為什麼要去？**\n年輕人的最愛。那個貫穿三層樓的水晶吊燈酒吧 (Chandelier Bar) 絕對是拍照聖地。記得去二樓吃 Eggslut。" },
+                { name: "Caesars Palace", tag: "浮誇", desc: "重回古羅馬。", info: "💬 **為什麼要去？**\n想體驗這種極致的奢華浮誇，就來這裡。Forum Shops 裡的旋轉手扶梯和會動的雕像秀是經典。" },
+                { name: "Paris", tag: "浪漫", desc: "鐵塔下的晚餐。", info: "💬 **為什麼要去？**\n鐵塔腳直接插進賭場屋頂的設計太酷了。推薦去 Mon Ami Gabi 吃飯，坐在戶外剛好可以看對面的 Bellagio 水舞。" },
+                { name: "Luxor", tag: "神秘", desc: "這光束直射宇宙！", info: "💬 **為什麼要去？**\n雖然飯店有點舊，但那個直射宇宙的超級光束還是很震撼。而且住在金字塔裡，電梯是斜著走的喔！" }
+            ]},
+            { category: "🎭 精彩表演", content: [
+                { name: "MJ One", tag: "必看", desc: "讓 MJ 復活的神奇大秀。", info: "💬 **為什麼要看？**\n就算你不是 MJ 鐵粉也會被震撼。最後的全息投影（Hologram）讓你感覺 MJ 真的復活了在台上跳舞，那瞬間全場都會起雞皮疙瘩。" },
+                { name: "Magic Mike", tag: "嗨翻", desc: "這不是脫衣舞，是派對！", info: "💬 **為什麼要看？**\n這不是那種低俗的脫衣舞秀，而是一場「為了讓女性開心」設計的派對。舞者很帥、很會跳，而且非常尊重人。氣氛超級嗨！" },
+                { name: "X Country", tag: "熱情", desc: "近距離的牛仔熱舞。", info: "💬 **為什麼要看？**\n如果你喜歡鄉村音樂的活力，這場秀很適合。場地很小，互動感很強，舞者非常敬業專業。" },
+                { name: "Fremont St", tag: "免費", desc: "頭頂上的超大螢幕。", info: "💬 **為什麼要看？**\n這是賭城的發源地，氣氛比 Strip 更狂野一點。頭頂上是世界最大的螢幕，每小時都有燈光秀，路邊還有各種奇怪的街頭藝人。" },
+                { name: "Bellagio Fountains", tag: "免費", desc: "賭城的靈魂。", info: "💬 **為什麼要看？**\n這絕對是拉斯維加斯的靈魂。不管看幾次，配合著 Andrea Bocelli 的歌聲，水柱衝上天際的時候還是會很感動。" },
+                { name: "Lake of Dreams", tag: "免費", desc: "有點怪但很酷。", info: "💬 **為什麼要看？**\n這是一個很奇幻的免費秀。巨大的白色人頭從瀑布後昇起來，配上燈光投影，有一種說不出的迷幻感。" }
+            ]},
+            { category: "🎒 行前/打包", id: "prep", content: [] }
+        ];
+
+        // --- PREP LIST DATA ---
+        const prepItems = [
+            "🆔 護照 / ID / 駕照",
+            "💳 信用卡 & 現金 (小費)",
+            "✈️ 機票 & 訂房確認單",
+            "🧴 保濕乳液/護唇膏 (Vegas超乾)",
+            "🕶️ 太陽眼鏡 & 防曬",
+            "🔌 手機充電器 & 行動電源",
+            "🧥 羽絨衣/防風外套 (Zion/Bryce)",
+            "🥾 好走的鞋/登山鞋",
+            "🧢 毛帽 & 手套 (Bryce會冷)",
+            "👙 泳衣 (飯店泳池/Jacuzzi)",
+            "💊 個人藥品/暈車藥",
+            "🗺️ 下載離線地圖 (Utah區域)",
+            "🎫 Show 的門票 (電子檔)",
+            "🦷 牙刷牙膏 (有些飯店不主動給)"
+        ];
+
+        // --- LOGIC ---
+        function renderDays() {
+            const scroller = document.querySelector('.day-scroller');
+            scroller.innerHTML = '';
+            daysData.forEach((day, index) => {
+                const chip = document.createElement('div');
+                chip.className = `day-chip ${index === 0 ? 'active' : ''} animate-item`;
+                chip.onclick = () => switchDay(index);
+                chip.innerHTML = `<span class="d-date">${day.date}</span><span class="d-week">${day.week}</span>`;
+                scroller.appendChild(chip);
+            });
+            switchDay(0);
+            
+            // Start Countdown
+            updateCountdown();
+            setInterval(updateCountdown, 60000);
+            
+            // Render Prep List
+            renderPrepList();
+        }
+
+        function updateCountdown() {
+            const tripStart = new Date('2025-11-25T00:00:00-08:00');
+            const now = new Date();
+            const diff = tripStart - now;
+            const banner = document.getElementById('countdown-banner');
+            if(diff > 0) {
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                banner.innerText = `距離出發還有 ${days}天 ${hours}小時 ✈️`;
+                banner.style.opacity = '1'; 
+            } else if (diff > -7 * 24 * 60 * 60 * 1000) {
+                banner.innerText = "旅程進行中 🎉";
+            } else {
+                banner.style.display = 'none';
+            }
+        }
+
+        function switchDay(index) {
+            const data = daysData[index];
+            document.getElementById('header-title').innerText = data.title;
+            document.getElementById('header-subtitle').innerText = `${data.date} ${data.week}`;
+            document.getElementById('header-subtitle').style.color = data.color;
+            
+            document.querySelectorAll('.day-chip').forEach((chip, idx) => {
+                if (idx === index) { chip.classList.add('active'); chip.style.backgroundColor = data.color; } 
+                else { chip.classList.remove('active'); chip.style.backgroundColor = 'rgba(255,255,255,0.9)'; }
+            });
+
+            document.documentElement.style.setProperty('--theme-color', data.color);
+            document.getElementById('bg-itinerary').style.backgroundImage = `url('${data.bgImg}')`;
+
+            const container = document.getElementById('day-content');
+            
+            // Scroll to top of itinerary content
+            const itContent = document.getElementById('tab-itinerary');
+            if(itContent) itContent.scrollTop = 0;
+
+            let weatherGradient = `linear-gradient(135deg, ${data.color}dd 0%, ${data.color} 100%)`;
+            if(data.color === "#27AE60") weatherGradient = "linear-gradient(135deg, #43cea2 0%, #185a9d 100%)";
+            if(data.color === "#8E44AD") weatherGradient = "linear-gradient(135deg, #cc2b5e 0%, #753a88 100%)";
+            
+            let html = `
+                <a href="${data.mapUrl}" target="_blank" class="map-btn-compact animate-item">
+                    <i data-lucide="map-pin"></i> 查看今日路線地圖
+                </a>
+                
+                <div id="day-weather-card" class="weather-detail-card animate-item" style="background: ${weatherGradient}">
+                    <div class="wd-header">
+                        <span class="wd-title"><i data-lucide="cloud-sun"></i> 早上9點 - 晚上9點</span>
+                        <span class="wd-info" id="w-header-info">最高: --° | 最低: --°</span>
+                    </div>
+                    <div class="wd-chart-container">
+                        <svg class="wd-chart-svg" id="w-chart" viewBox="0 0 300 150">
+                            <!-- Line and dots will be injected here -->
+                        </svg>
+                    </div>
+                </div>
+            `;
+
+            if (data.shuttle) {
+                html += `
+                <div class="card shuttle-block animate-item" style="border-left: 5px solid ${data.color}">
+                    <div class="shuttle-title" style="color:${data.color}"><i data-lucide="bus"></i> 錫安接駁車</div>
+                    <div class="shuttle-container"><h3 style="margin:0 0 5px; color:#27AE60; font-size:14px;">🟢 綠線 (公園內)</h3><p style="font-size:12px; color:#666; margin:0;">遊客中心 ⇄ Temple of Sinawava</p></div>
+                    <div class="shuttle-container"><h3 style="margin:0 0 5px; color:#E67E22; font-size:14px;">🟠 橘線 (市區)</h3><p style="font-size:12px; color:#666; margin:0;">Springdale ⇄ 公園入口</p></div>
+                </div>`;
+            }
+
+            html += `<div class="card animate-item">`; 
+            data.content.forEach((item) => {
+                const safeName = item.name.replace(/'/g, "\\'").replace(/"/g, "&quot;"); 
+                const safeDesc = item.desc.replace(/'/g, "\\'").replace(/"/g, "&quot;"); 
+                const safeInfo = item.info.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "\\n");
+                html += `
+                    <div class="place-item" onclick="openModal('${safeName}', '${safeDesc}', '${safeInfo}')">
+                        <div class="place-header"><span class="place-name" style="color:${data.color}">${item.name}</span><span class="place-tag">${item.tag}</span></div>
+                        <p class="place-desc">${item.desc}</p>
+                    </div>`;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+            lucide.createIcons();
+            fetchDetailedWeather(data.coords, data.fullDate);
+            fetchCurrentWeather(data.coords, data.weatherLoc);
+        }
+
+        function renderGuideScroller() {
+            const scroller = document.getElementById('guide-scroller');
+            scroller.innerHTML = '';
+            guideData.forEach((cat, index) => {
+                const chip = document.createElement('div');
+                chip.className = `guide-chip ${index === 0 ? 'active' : ''} animate-item`;
+                chip.innerText = cat.category;
+                chip.onclick = () => switchGuideCategory(index);
+                scroller.appendChild(chip);
+            });
+            switchGuideCategory(0);
+        }
+
+        function switchGuideCategory(index) {
+            const data = guideData[index];
+            const chips = document.querySelectorAll('.guide-chip');
+            chips.forEach((chip, idx) => {
+                if (idx === index) chip.classList.add('active');
+                else chip.classList.remove('active');
+            });
+
+            const container = document.getElementById('guide-content');
+            
+            // Handle "Prep" special case
+            if (data.id === 'prep') {
+                let html = `
+                    <!-- Tips Card -->
+                    <div class="card animate-item" style="margin-top:10px;">
+                        <div class="place-item" onclick="openModal('行前重要提醒', '別忘了這些！', '1. 下載離線地圖：\\n國家公園內(Zion, Bryce)大部分地區完全沒有訊號。出發前請在 Google Maps 下載「Utah」區域的離線地圖。\\n\\n2. 時區變換：\\nUtah (猶他州) 使用 MST 時間，比 Las Vegas/加州 (PST) 快一小時！手機會自動跳轉，但請留意手錶時間，避免錯過預約。\\n\\n3. 穿著建議：\\nBryce Canyon 海拔很高，非常冷（可能下雪），請帶羽絨衣、毛帽、手套。Vegas 晚上風大也偏涼。')">
+                            <div class="place-header"><span class="place-name">💡 重要提醒</span></div>
+                            <p class="place-desc">離線地圖、時區變換、洋蔥式穿搭。</p>
+                        </div>
+                    </div>
+
+                    <!-- Packing List Container -->
+                    <div class="card animate-item">
+                        <div class="packing-header">
+                            <div class="place-header"><span class="place-name">🎒 打包清單</span><span class="place-tag highlight" id="pack-count">0/0</span></div>
+                            <div class="progress-container"><div class="progress-bar" id="pack-progress"></div></div>
+                            <div class="progress-text"><span>完成度</span><span id="pack-percent">0%</span></div>
+                        </div>
+                        <div id="packing-list"></div>
+                    </div>
+                    <button class="btn-action animate-item" style="width:100%; justify-content:center; margin-top:20px; background:rgba(255,255,255,0.5);" onclick="resetPackingList(this)">重置清單</button>
+                `;
+                container.innerHTML = html;
+                renderPrepList(); // Populate checklist
+                return;
+            }
+
+            // Normal Guide Card Rendering
+            let html = `<div class="card animate-item" style="margin-top:10px;">`;
+            data.content.forEach(item => {
+                const safeName = item.name.replace(/'/g, "\\'").replace(/"/g, "&quot;"); 
+                const safeDesc = item.desc.replace(/'/g, "\\'").replace(/"/g, "&quot;"); 
+                const safeInfo = item.info.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "\\n");
+                html += `
+                    <div class="place-item" onclick="openModal('${safeName}', '${safeDesc}', '${safeInfo}')">
+                        <div class="place-header"><span class="place-name">${item.name}</span><span class="place-tag secondary">${item.tag}</span></div>
+                        <p class="place-desc">${item.desc}</p>
+                    </div>`;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        // --- PREP LIST LOGIC ---
+        function renderPrepList() {
+            const container = document.getElementById('packing-list');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            const savedState = JSON.parse(localStorage.getItem('tripPrepState') || '{}');
+            let checkedCount = 0;
+
+            prepItems.forEach((item, index) => {
+                const isChecked = savedState[index] || false;
+                if(isChecked) checkedCount++;
+                
+                const div = document.createElement('div');
+                div.className = `checkbox-item ${isChecked ? 'checked' : ''}`;
+                div.onclick = () => toggleCheck(index);
+                div.innerHTML = `
+                    <div class="custom-checkbox"><i data-lucide="check" class="check-icon" size="16"></i></div>
+                    <span class="place-name" style="font-size:15px; font-weight:500;">${item}</span>
+                `;
+                container.appendChild(div);
+            });
+            
+            updateProgress(checkedCount, prepItems.length);
+            lucide.createIcons();
+        }
+
+        function toggleCheck(index) {
+            const savedState = JSON.parse(localStorage.getItem('tripPrepState') || '{}');
+            savedState[index] = !savedState[index];
+            localStorage.setItem('tripPrepState', JSON.stringify(savedState));
+            renderPrepList();
+        }
+
+        function updateProgress(checked, total) {
+            const percent = Math.round((checked / total) * 100);
+            const bar = document.getElementById('pack-progress');
+            const pText = document.getElementById('pack-percent');
+            const count = document.getElementById('pack-count');
+            
+            if(bar) bar.style.width = `${percent}%`;
+            if(pText) pText.innerText = `${percent}%`;
+            if(count) count.innerText = `${checked}/${total}`;
+        }
+
+        function resetPackingList(btnElement) {
+            if (btnElement.innerText === "重置清單") {
+                btnElement.innerText = "確定要重置？(點擊確認)";
+                btnElement.style.backgroundColor = "#ffeba1"; 
+                btnElement.style.color = "#d35400";
+                
+                setTimeout(() => {
+                    if (btnElement.innerText !== "重置清單" && btnElement.innerText !== "已完成重置") {
+                       btnElement.innerText = "重置清單";
+                       btnElement.style.backgroundColor = "rgba(255,255,255,0.5)";
+                       btnElement.style.color = "var(--theme-color)";
+                    }
+                }, 3000);
+                return;
+            }
+
+            localStorage.removeItem('tripPrepState');
+            renderPrepList();
+            
+            btnElement.innerText = "已完成重置";
+            btnElement.style.backgroundColor = "#d4edda";
+            btnElement.style.color = "#155724";
+            
+            setTimeout(() => {
+                btnElement.innerText = "重置清單";
+                btnElement.style.backgroundColor = "rgba(255,255,255,0.5)";
+                btnElement.style.color = "var(--theme-color)";
+            }, 1500);
+        }
+
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.content-area').forEach(div => div.classList.remove('active'));
+            document.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.bg-image').forEach(bg => bg.classList.remove('active'));
+
+            // Handle Weather Widget Visibility
+            const weatherWidget = document.querySelector('.weather-widget');
+            if (tabId === 'itinerary') {
+                if(weatherWidget) {
+                    weatherWidget.style.visibility = 'visible';
+                    weatherWidget.style.opacity = '1';
+                }
+            } else {
+                if(weatherWidget) {
+                    weatherWidget.style.opacity = '0';
+                    setTimeout(() => weatherWidget.style.visibility = 'hidden', 300);
+                }
+            }
+
+            // Handle Themes
+            if (tabId === 'itinerary') {
+                document.getElementById('bg-itinerary').classList.add('active');
+                const activeIndex = Array.from(document.querySelectorAll('.day-chip')).findIndex(c => c.classList.contains('active'));
+                switchDay(activeIndex !== -1 ? activeIndex : 0);
+            } else if (tabId === 'flights') {
+                document.getElementById('bg-flights').classList.add('active');
+                document.documentElement.style.setProperty('--theme-color', '#2980b9'); 
+                document.getElementById('header-title').innerText = "交通資訊";
+                document.getElementById('header-subtitle').innerText = "Flights & Car";
+                document.getElementById('header-subtitle').style.color = '#2980b9';
+            } else if (tabId === 'hotels') {
+                document.getElementById('bg-hotels').classList.add('active');
+                document.documentElement.style.setProperty('--theme-color', '#8e44ad'); 
+                document.getElementById('header-title').innerText = "住宿安排";
+                document.getElementById('header-subtitle').innerText = "Hotels";
+                document.getElementById('header-subtitle').style.color = '#8e44ad';
+            } else if (tabId === 'guide') {
+                document.getElementById('bg-guide').classList.add('active');
+                document.documentElement.style.setProperty('--theme-color', '#27ae60'); 
+                document.getElementById('header-title').innerText = "旅遊指南";
+                document.getElementById('header-subtitle').innerText = "Explore";
+                document.getElementById('header-subtitle').style.color = '#27ae60';
+                if(document.getElementById('guide-content').innerHTML === "") renderGuideScroller();
+                if(document.getElementById('guide-scroller').children.length === 0) renderGuideScroller();
+            } else if (tabId === 'prep') {
+                document.getElementById('bg-prep').classList.add('active');
+                document.documentElement.style.setProperty('--theme-color', '#e67e22');
+                document.getElementById('header-title').innerText = "行前準備";
+                document.getElementById('header-subtitle').innerText = "Checklist";
+                document.getElementById('header-subtitle').style.color = '#e67e22';
+                renderPrepList(); // Ensure fresh render
+            }
+
+            document.getElementById('tab-' + tabId).classList.add('active');
+            el.classList.add('active');
+        }
+
+        function openModal(title, subtitle, desc) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-desc').innerHTML = `<strong>${subtitle}</strong><br><br>${desc.replace(/\n/g, '<br>')}`;
+            document.getElementById('detail-modal').classList.add('open');
+        }
+        function closeModal() { document.getElementById('detail-modal').classList.remove('open'); }
+
+        async function fetchCurrentWeather(coords, locName) {
+            const [lat, long] = coords.split(',');
+            document.getElementById('current-loc').innerText = locName;
+            try {
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&current=temperature_2m&temperature_unit=celsius`;
+                const res = await fetch(url); const json = await res.json();
+                document.getElementById('current-temp').innerText = `${Math.round(json.current.temperature_2m)}°C`;
+            } catch (e) { console.error(e); }
+        }
+
+        async function fetchDetailedWeather(coords, dateStr) {
+            const [lat, long] = coords.split(',');
+            try {
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&daily=temperature_2m_max,temperature_2m_min,sunset&hourly=temperature_2m&start_date=${dateStr}&end_date=${dateStr}&temperature_unit=celsius&timezone=auto`;
+                const res = await fetch(url); 
+                const json = await res.json();
+
+                if(json.daily && json.daily.temperature_2m_max) {
+                    const max = Math.round(json.daily.temperature_2m_max[0]);
+                    const min = Math.round(json.daily.temperature_2m_min[0]);
+                    let sunsetTime = "--:--";
+                    if(json.daily.sunset && json.daily.sunset[0]) {
+                        const dateObj = new Date(json.daily.sunset[0]);
+                        let hours = dateObj.getHours();
+                        const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+                        const ampm = hours >= 12 ? '下午' : '上午';
+                        hours = hours % 12;
+                        hours = hours ? hours : 12; 
+                        sunsetTime = `${ampm} ${hours}:${minutes}`;
+                    }
+                    const hlElement = document.getElementById('w-header-info');
+                    if(hlElement) hlElement.innerText = `最高:${max}° 最低:${min}° | 日落 ${sunsetTime}`;
+                }
+
+                if(json.hourly && json.hourly.temperature_2m) {
+                    const hours = json.hourly.temperature_2m.slice(9, 22); 
+                    currentHourlyTemps = hours;
+                    drawChart(hours);
+                }
+            } catch (e) { 
+                console.error("Weather error", e); 
+                const card = document.getElementById('day-weather-card');
+                if(card) card.style.display = 'none'; 
+            }
+        }
+
+        function drawChart(temps) {
+            if (!temps) temps = currentHourlyTemps;
+            if (!temps || temps.length === 0) return;
+
+            const container = document.querySelector('.wd-chart-container');
+            const svg = document.getElementById('w-chart');
+            const w = container.getBoundingClientRect().width || 300;
+            const h = 150;
+
+            svg.innerHTML = '';
+            svg.removeAttribute('preserveAspectRatio');
+            svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+
+            const padding = 15; 
+            const minTemp = Math.min(...temps) - 1;
+            const maxTemp = Math.max(...temps) + 1;
+            const range = maxTemp - minTemp;
+
+            let points = "";
+            let circles = "";
+            let labels = "";
+            let timeLabels = "";
+            let areaPath = `M ${padding},${h-20} `;
+            const stepX = (w - padding * 2) / (temps.length - 1);
+
+            temps.forEach((t, i) => {
+                const x = padding + i * stepX;
+                const graphBottom = h - 20; 
+                const graphHeight = graphBottom - padding - 20; 
+                const y = graphBottom - ((t - minTemp) / range) * graphHeight;
+                
+                points += `${x},${y} `;
+                areaPath += `L ${x},${y} `;
+
+                circles += `<circle cx="${x}" cy="${y}" r="3" class="chart-dot" />`;
+                labels += `<text x="${x}" y="${y - 10}" class="chart-text">${Math.round(t)}°</text>`;
+                
+                let timeVal = (9 + i);
+                let displayTime = timeVal;
+                if (timeVal > 12) displayTime -= 12;
+                timeLabels += `<text x="${x}" y="${h - 5}" class="chart-label">${displayTime}時</text>`;
+            });
+            
+            const lastX = padding + (temps.length - 1) * stepX;
+            areaPath += `L ${lastX},${h-20} Z`;
+
+            svg.innerHTML = `<path d="${areaPath}" class="chart-area" /><polyline points="${points}" class="chart-line" />${circles}${labels}${timeLabels}`;
+        }
+
+        window.addEventListener('resize', () => { drawChart(); });
+        window.onload = renderDays;
+    </script>
+</body>
+</html>

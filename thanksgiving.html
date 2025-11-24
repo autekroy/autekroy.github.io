@@ -22,17 +22,24 @@
             --card-blur: rgba(255, 255, 255, 0.85);
             --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
             --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+            --bg-base: #F2F2F7;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+        /* --- iOS 橡皮筋效果終極修正 --- */
+        html {
+            height: 100%; width: 100%; overflow: hidden; 
+            background-color: var(--bg-base); overscroll-behavior: none;
+        }
+
         body {
             margin: 0;
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-            background-color: #000;
+            background-color: var(--bg-base);
             color: var(--text-primary);
-            height: 100vh;
-            overflow: hidden;
+            height: 100%; width: 100%; position: fixed; 
+            overflow: hidden; overscroll-behavior: none;
         }
 
         /* --- Animations --- */
@@ -45,7 +52,6 @@
             opacity: 0;
             animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-
         .animate-item:nth-child(1) { animation-delay: 0.05s; }
         .animate-item:nth-child(2) { animation-delay: 0.1s; }
         .animate-item:nth-child(3) { animation-delay: 0.15s; }
@@ -53,7 +59,10 @@
         .animate-item:nth-child(5) { animation-delay: 0.25s; }
 
         /* --- Backgrounds --- */
-        .bg-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+        .bg-container { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: -1; pointer-events: none; background-color: var(--bg-base);
+        }
         .bg-image {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-size: cover; background-position: center;
@@ -63,22 +72,19 @@
         .bg-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(to bottom, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.5) 40%, rgba(242,242,247,0.92) 100%);
-            z-index: 0;
-            backdrop-filter: blur(2px);
+            z-index: 0; backdrop-filter: blur(2px);
         }
 
         /* --- Header --- */
         header {
             padding: calc(var(--safe-top) + 10px) 20px 10px;
             background: rgba(255, 255, 255, 0.6);
-            backdrop-filter: blur(25px) saturate(180%);
-            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            backdrop-filter: blur(25px) saturate(180%); -webkit-backdrop-filter: blur(25px) saturate(180%);
             border-bottom: 0.5px solid rgba(0,0,0,0.05);
             position: absolute; top: 0; left: 0; width: 100%; z-index: 10;
             display: flex; justify-content: space-between; align-items: flex-start;
             transition: all 0.3s;
         }
-        
         .header-left h1 { font-size: 28px; font-weight: 800; margin: 0; letter-spacing: -0.5px; color: #000; }
         .header-left .subtitle { 
             font-size: 13px; color: var(--theme-color); font-weight: 700; 
@@ -90,8 +96,9 @@
             text-align: right; background: rgba(255,255,255,0.5); padding: 6px 12px; border-radius: 14px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: flex-end;
             border: 1px solid rgba(255,255,255,0.4);
-            transition: opacity 0.3s ease, visibility 0.3s;
+            transition: opacity 0.3s ease, visibility 0.3s; cursor: pointer;
         }
+        .weather-widget:active { transform: scale(0.95); background: rgba(255,255,255,0.8); }
         .weather-temp { font-size: 20px; font-weight: 700; color: #333; line-height: 1; }
         .weather-loc { font-size: 10px; color: #666; margin-top: 3px; font-weight: 600; text-transform: uppercase; }
 
@@ -104,11 +111,9 @@
 
         /* --- Content --- */
         .content-area {
-            height: 100%; 
-            overflow-y: auto;
-            overscroll-behavior: contain; 
+            height: 100%; overflow-y: auto; overflow-x: hidden;
+            overscroll-behavior-y: none; -webkit-overflow-scrolling: touch;
             padding: calc(var(--safe-top) + 100px) 20px calc(var(--safe-bottom) + 80px);
-            -webkit-overflow-scrolling: touch;
             display: none; opacity: 0; transition: opacity 0.4s ease;
         }
         .content-area.active { display: block; opacity: 1; }
@@ -120,7 +125,9 @@
             color: white; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
             position: relative; overflow: hidden;
             border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer; transition: transform 0.2s;
         }
+        .weather-detail-card:active { transform: scale(0.98); opacity: 0.9; }
         .wd-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; padding: 0 5px; }
         .wd-title { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; }
         .wd-info { text-align: right; font-size: 12px; font-weight: 600; opacity: 0.9; }
@@ -128,15 +135,19 @@
         .wd-chart-container { width: 100%; height: 150px; position: relative; margin-top: 10px; }
         .wd-chart-svg { width: 100%; height: 100%; overflow: visible; display: block; }
         .chart-area { fill: rgba(255,255,255,0.15); }
-        .chart-line {
-            fill: none; stroke: white; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
-            filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.1));
-        }
+        .chart-line { fill: none; stroke: white; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.1)); }
         .chart-dot { fill: white; stroke: rgba(0,0,0,0.1); stroke-width: 2px; }
         .chart-text { font-size: 11px; fill: white; font-weight: 700; text-anchor: middle; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .chart-label { font-size: 10px; fill: rgba(255,255,255,0.8); text-anchor: middle; font-weight: 500; }
+        
+        /* Chart Icons */
+        #chart-icons-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .chart-icon-wrapper {
+            position: absolute; transform: translateX(-50%); display: flex; justify-content: center; align-items: center;
+        }
+        .chart-icon-wrapper svg { width: 16px; height: 16px; color: rgba(255,255,255,0.9); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); }
 
-        /* --- Scrollers --- */
+        /* --- Scrollers (With New Borders) --- */
         .day-scroller-container {
             position: sticky; top: 0; margin: -10px -20px 20px; padding: 15px 20px 10px;
             background: rgba(255,255,255,0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -146,11 +157,14 @@
         .day-scroller { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; scrollbar-width: none; }
         .day-scroller::-webkit-scrollbar { display: none; }
         
+        /* Updated Day Chip with colored border */
         .day-chip {
             flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-width: 68px; height: 64px; background: rgba(255,255,255,0.8); border-radius: 18px;
+            min-width: 68px; height: 64px; background: rgba(255,255,255,0.9); border-radius: 18px;
             font-size: 12px; color: var(--text-secondary); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            box-shadow: var(--shadow-sm); border: 1px solid rgba(255,255,255,0.5);
+            box-shadow: var(--shadow-sm); 
+            /* 關鍵修改：加入配合主題色的邊框 (透明度 70% 變淡) */
+            border: 1.5px solid color-mix(in srgb, var(--theme-color), transparent 70%);
         }
         .day-chip span.d-date { font-size: 20px; font-weight: 800; color: #1c1c1e; margin-bottom: 2px; }
         .day-chip span.d-week { font-weight: 500; font-size: 11px; opacity: 0.8; }
@@ -162,19 +176,23 @@
         }
         .day-chip.active span.d-date { color: white; }
         
+        /* Updated Guide Chip with colored border */
         .guide-chip {
             flex: 0 0 auto; padding: 0 20px; height: 44px; 
             display: flex; align-items: center; justify-content: center;
-            background: rgba(255,255,255,0.8); border-radius: 22px;
+            background: rgba(255,255,255,0.9); border-radius: 22px;
             font-size: 14px; font-weight: 700; color: var(--text-secondary);
-            box-shadow: var(--shadow-sm); border: 1px solid rgba(255,255,255,0.5); transition: all 0.3s;
+            box-shadow: var(--shadow-sm); 
+            /* 關鍵修改：加入配合主題色的邊框 */
+            border: 1.5px solid color-mix(in srgb, var(--theme-color), transparent 70%); 
+            transition: all 0.3s;
         }
         .guide-chip.active { 
             background: var(--theme-color); color: white; 
-            box-shadow: 0 6px 15px -4px var(--theme-color); transform: translateY(-1px); 
+            box-shadow: 0 6px 15px -4px var(--theme-color); transform: translateY(-1px); border-color: transparent;
         }
 
-        /* --- New Compact Map Button --- */
+        /* --- Map Button --- */
         .map-btn-compact {
             display: flex; align-items: center; justify-content: center; gap: 8px;
             width: 100%; padding: 14px; margin-bottom: 15px;
@@ -220,104 +238,50 @@
         .place-desc { font-size: 15px; color: #666; line-height: 1.5; margin: 0; padding-right: 15px; }
         .hotel-date { font-size: 13px; color: #8e8e93; margin-top: 6px; display: block; font-weight: 600; }
 
-        /* --- Packing List Styles --- */
-        .packing-header {
-            padding: 20px 20px 10px;
-        }
-        .progress-container {
-            width: 100%; height: 8px; background: #e5e5ea; border-radius: 4px; overflow: hidden; margin-top: 10px;
-        }
-        .progress-bar {
-            height: 100%; background: #34C759; width: 0%; transition: width 0.3s ease;
-        }
-        .progress-text {
-            font-size: 13px; color: #8e8e93; font-weight: 600; margin-top: 8px; display: flex; justify-content: space-between;
-        }
-        
-        .checkbox-item {
-            display: flex; align-items: center; padding: 16px 20px; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05);
-            transition: background 0.2s;
-        }
+        /* --- Packing List --- */
+        .packing-header { padding: 20px 20px 10px; }
+        .progress-container { width: 100%; height: 8px; background: #e5e5ea; border-radius: 4px; overflow: hidden; margin-top: 10px; }
+        .progress-bar { height: 100%; background: #34C759; width: 0%; transition: width 0.3s ease; }
+        .progress-text { font-size: 13px; color: #8e8e93; font-weight: 600; margin-top: 8px; display: flex; justify-content: space-between; }
+        .checkbox-item { display: flex; align-items: center; padding: 16px 20px; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05); transition: background 0.2s; }
         .checkbox-item:last-child { border-bottom: none; }
         .checkbox-item:active { background: rgba(0,0,0,0.02); }
-        
-        .custom-checkbox {
-            width: 24px; height: 24px; border-radius: 6px; border: 2px solid #c7c7cc; margin-right: 15px;
-            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
-        }
-        .checkbox-item.checked .custom-checkbox {
-            background: #34C759; border-color: #34C759;
-        }
-        .checkbox-item.checked .place-name {
-            color: #aeaeb2; text-decoration: line-through;
-        }
+        .custom-checkbox { width: 24px; height: 24px; border-radius: 6px; border: 2px solid #c7c7cc; margin-right: 15px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .checkbox-item.checked .custom-checkbox { background: #34C759; border-color: #34C759; }
+        .checkbox-item.checked .place-name { color: #aeaeb2; text-decoration: line-through; }
         .check-icon { color: white; opacity: 0; transform: scale(0.5); transition: all 0.2s; }
         .checkbox-item.checked .check-icon { opacity: 1; transform: scale(1); }
 
         /* --- Flight & Shuttle --- */
-        .flight-time-row {
-            display: flex; justify-content: space-between; align-items: center;
-            margin: 18px 0; padding: 12px 0; border-top: 1px dashed rgba(0,0,0,0.1); border-bottom: 1px dashed rgba(0,0,0,0.1);
-        }
+        .flight-time-row { display: flex; justify-content: space-between; align-items: center; margin: 18px 0; padding: 12px 0; border-top: 1px dashed rgba(0,0,0,0.1); border-bottom: 1px dashed rgba(0,0,0,0.1); }
         .flight-time-col { text-align: center; flex: 1; }
         .ft-label { font-size: 11px; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600; }
         .ft-time { font-size: 22px; font-weight: 800; color: #1c1c1e; font-variant-numeric: tabular-nums; }
         .ft-icon { color: #d1d1d6; margin: 0 10px; }
-        
-        .lounge-info {
-            background: #f2f2f7; padding: 14px; border-radius: 16px; margin-top: 12px; display: flex; gap: 12px; align-items: flex-start;
-        }
+        .lounge-info { background: #f2f2f7; padding: 14px; border-radius: 16px; margin-top: 12px; display: flex; gap: 12px; align-items: flex-start; }
         .lounge-text { font-size: 13px; color: #444; line-height: 1.5; font-weight: 500; }
         .lounge-badge { background: #002663; color: white; font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 800; display: inline-block; margin-bottom: 4px; }
-        
         .shuttle-block { padding: 24px; background: transparent; }
         .shuttle-title { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--theme-color); margin-bottom: 16px; font-size: 16px; }
         .shuttle-container { background: rgba(255,255,255,0.6); border-radius: 16px; padding: 16px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.5); }
 
         /* --- Modal --- */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3);
-            z-index: 100; opacity: 0; visibility: hidden; transition: all 0.3s;
-            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 100; opacity: 0; visibility: hidden; transition: all 0.3s; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
         .modal-overlay.open { opacity: 1; visibility: visible; }
-        .modal-sheet {
-            position: absolute; bottom: 0; left: 0; width: 100%; background: #fff;
-            border-radius: 30px 30px 0 0; padding: 30px 25px 60px;
-            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-            max-height: 85vh; overflow-y: auto;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
-        }
+        .modal-sheet { position: absolute; bottom: 0; left: 0; width: 100%; background: #fff; border-radius: 30px 30px 0 0; padding: 30px 25px 60px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1); max-height: 85vh; overflow-y: auto; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
         .modal-overlay.open .modal-sheet { transform: translateY(0); }
         .modal-handle { width: 40px; height: 5px; background: #e5e5ea; border-radius: 10px; margin: -10px auto 30px; }
         .modal-title { font-size: 26px; font-weight: 800; margin-bottom: 15px; color: #000; line-height: 1.2; }
         .modal-desc { font-size: 17px; color: #3a3a3c; line-height: 1.6; white-space: pre-wrap; font-weight: 400; }
-        .modal-close-btn {
-            position: absolute; top: 25px; right: 25px; background: #f2f2f7; border: none; 
-            width: 32px; height: 32px; border-radius: 50%; font-size: 20px; 
-            color: #3c3c43; display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-        }
+        .modal-close-btn { position: absolute; top: 25px; right: 25px; background: #f2f2f7; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 20px; color: #3c3c43; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 
         /* --- Tab Bar --- */
-        .tab-bar {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background: rgba(255,255,255,0.85); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%);
-            border-top: 0.5px solid rgba(0,0,0,0.15); display: flex; justify-content: space-around;
-            padding-bottom: var(--safe-bottom); height: calc(60px + var(--safe-bottom)); z-index: 20;
-        }
-        .tab-item {
-            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #999; font-size: 10px; gap: 4px; cursor: pointer; transition: all 0.2s;
-        }
+        .tab-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%); border-top: 0.5px solid rgba(0,0,0,0.15); display: flex; justify-content: space-around; padding-bottom: var(--safe-bottom); height: calc(60px + var(--safe-bottom)); z-index: 20; }
+        .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; font-size: 10px; gap: 4px; cursor: pointer; transition: all 0.2s; }
         .tab-item.active { color: var(--theme-color); transform: translateY(-2px); }
         .tab-item.active svg { stroke-width: 2.5px; }
 
-        .btn-action {
-            display: inline-flex; align-items: center; gap: 8px; background: #f2f2f7; color: var(--theme-color); 
-            padding: 10px 20px; border-radius: 14px; font-size: 15px; font-weight: 600; text-decoration: none; margin-top: 15px;
-            transition: transform 0.2s;
-        }
+        .btn-action { display: inline-flex; align-items: center; gap: 8px; background: #f2f2f7; color: var(--theme-color); padding: 10px 20px; border-radius: 14px; font-size: 15px; font-weight: 600; text-decoration: none; margin-top: 15px; transition: transform 0.2s; }
         .btn-action:active { transform: scale(0.96); opacity: 0.8; }
     </style>
 </head>
@@ -328,7 +292,6 @@
         <div id="bg-flights" class="bg-image" style="background-image: url('https://images.unsplash.com/photo-1569154941061-e231b4725ef1?q=80&w=1080');"></div>
         <div id="bg-hotels" class="bg-image" style="background-image: url('https://images.unsplash.com/photo-1618773928121-c32242e63f39?q=80&w=1080');"></div>
         <div id="bg-guide" class="bg-image" style="background-image: url('https://images.unsplash.com/photo-1501504905252-473c47e087f8?q=80&w=1080');"></div>
-        <div id="bg-prep" class="bg-image" style="background-image: url('https://images.unsplash.com/photo-1584810359583-96fc3448beaa?q=80&w=1080');"></div>
         <div class="bg-overlay"></div>
     </div>
 
@@ -338,7 +301,7 @@
             <div class="subtitle" id="header-subtitle">Overview</div>
             <div id="countdown-banner">即將出發 ✈️</div>
         </div>
-        <div class="weather-widget">
+        <div class="weather-widget" id="header-weather-widget" onclick="openCurrentWeather()">
             <span class="weather-temp" id="current-temp">--°</span>
             <span class="weather-loc" id="current-loc">LOADING</span>
         </div>
@@ -364,7 +327,12 @@
                 </div>
                 <div class="lounge-info">
                     <div style="min-width:20px;"><i data-lucide="armchair" size="20" color="#002663"></i></div>
-                    <div class="lounge-text"><span class="lounge-badge">美國運通貴賓室</span><br><strong>SFO: Terminal 3 (F Gates)</strong><br>*Southwest 在 T1。T1 與 T3 已有 Airside 連通道，步行約 10-15 分鐘，不需重過安檢。</div>
+                    <div class="lounge-text">
+                        <span class="lounge-badge">美國運通貴賓室</span><br>
+                        <strong>SFO: Terminal 2</strong><br>
+                        *Southwest 在 T1。T1 與 T2 有 Airside 連通道，步行約 5-10 分鐘，不需重過安檢。<br>
+                        <a href="https://queue.americanexpress.com/web/SFO_CENTURION_LOUNGE" target="_blank" style="color:#002663; font-weight:bold; text-decoration:underline; display:inline-block; margin-top:5px;">👉 線上加入等待名單</a>
+                    </div>
                 </div>
                 <a href="https://www.flightaware.com/live/flight/SWA3237" target="_blank" class="btn-action" style="background:#f0f8ff; color:#2980b9"><i data-lucide="radar" size="16"></i> 狀態追蹤</a>
             </div>
@@ -453,6 +421,8 @@
     <script>
         lucide.createIcons();
         let currentHourlyTemps = [];
+        let currentWeatherLoc = ""; // Store current location for click handler
+        let currentHourlyCodes = []; // Store weather codes
 
         // --- DATA ---
         const daysData = [
@@ -501,6 +471,7 @@
         ];
 
         const guideData = [
+            { category: "🎒 行前/打包", id: "prep", content: [] },
             { category: "⛰️ 錫安", content: [
                 { name: "Checkerboard Mesa", tag: "地質", desc: "像棋盤一樣的岩山。", info: "💬 **為什麼要去？**\n這是東側入口最醒目的地標。岩石表面因為風蝕和凍融作用，形成了垂直和水平的溝槽，看起來就像巨大的棋盤。\n\n📍 **位置：**\n東側入口收費站剛進來就會看到。" },
                 { name: "Kolob Canyons", tag: "秘境", desc: "人少景美的紅色手指。", info: "💬 **為什麼要去？**\n這裡不在主峽谷區，而是在公園西北角（I-15 公路旁）。遊客非常少，巨大的紅色納瓦霍砂岩像手指一樣伸向天空，非常壯觀。\n\n🚗 **交通：**\n需要開車前往，無法從主峽谷搭 Shuttle 到達。" },
@@ -561,12 +532,12 @@
                 { name: "Fremont St", tag: "免費", desc: "頭頂上的超大螢幕。", info: "💬 **為什麼要看？**\n這是賭城的發源地，氣氛比 Strip 更狂野一點。頭頂上是世界最大的螢幕，每小時都有燈光秀，路邊還有各種奇怪的街頭藝人。" },
                 { name: "Bellagio Fountains", tag: "免費", desc: "賭城的靈魂。", info: "💬 **為什麼要看？**\n這絕對是拉斯維加斯的靈魂。不管看幾次，配合著 Andrea Bocelli 的歌聲，水柱衝上天際的時候還是會很感動。" },
                 { name: "Lake of Dreams", tag: "免費", desc: "有點怪但很酷。", info: "💬 **為什麼要看？**\n這是一個很奇幻的免費秀。巨大的白色人頭從瀑布後昇起來，配上燈光投影，有一種說不出的迷幻感。" }
-            ]},
-            { category: "🎒 行前/打包", id: "prep", content: [] }
+            ]}
         ];
 
         // --- PREP LIST DATA ---
         const prepItems = [
+            "📻 對講機 (國家公園無訊號)",
             "🆔 護照 / ID / 駕照",
             "💳 信用卡 & 現金 (小費)",
             "✈️ 機票 & 訂房確認單",
@@ -627,6 +598,9 @@
             document.getElementById('header-subtitle').innerText = `${data.date} ${data.week}`;
             document.getElementById('header-subtitle').style.color = data.color;
             
+            // Update global current location for weather click
+            currentWeatherLoc = data.weatherLoc;
+            
             document.querySelectorAll('.day-chip').forEach((chip, idx) => {
                 if (idx === index) { chip.classList.add('active'); chip.style.backgroundColor = data.color; } 
                 else { chip.classList.remove('active'); chip.style.backgroundColor = 'rgba(255,255,255,0.9)'; }
@@ -650,12 +624,15 @@
                     <i data-lucide="map-pin"></i> 查看今日路線地圖
                 </a>
                 
-                <div id="day-weather-card" class="weather-detail-card animate-item" style="background: ${weatherGradient}">
+                <div id="day-weather-card" class="weather-detail-card animate-item" style="background: ${weatherGradient}" onclick="window.open('https://www.google.com/search?q=weather+${data.weatherLoc}','_blank')">
                     <div class="wd-header">
                         <span class="wd-title"><i data-lucide="cloud-sun"></i> 早上9點 - 晚上9點</span>
                         <span class="wd-info" id="w-header-info">最高: --° | 最低: --°</span>
                     </div>
                     <div class="wd-chart-container">
+                        <!-- Overlay for Icons -->
+                        <div id="chart-icons-layer"></div>
+                        <!-- SVG Chart -->
                         <svg class="wd-chart-svg" id="w-chart" viewBox="0 0 300 150">
                             <!-- Line and dots will be injected here -->
                         </svg>
@@ -688,6 +665,13 @@
             lucide.createIcons();
             fetchDetailedWeather(data.coords, data.fullDate);
             fetchCurrentWeather(data.coords, data.weatherLoc);
+        }
+
+        // Function to open weather from header
+        function openCurrentWeather() {
+            if(currentWeatherLoc) {
+                window.open(`https://www.google.com/search?q=weather+${currentWeatherLoc}`, '_blank');
+            }
         }
 
         function renderGuideScroller() {
@@ -904,11 +888,25 @@
                 document.getElementById('current-temp').innerText = `${Math.round(json.current.temperature_2m)}°C`;
             } catch (e) { console.error(e); }
         }
+        
+        // --- Helper: Map Weather Code to Lucide Icon Name ---
+        function getIconFromCode(code) {
+            if (code === 0) return 'sun';
+            if (code <= 3) return 'cloud-sun';
+            if (code <= 48) return 'cloud-fog';
+            if (code <= 67) return 'cloud-rain';
+            if (code <= 77) return 'snowflake';
+            if (code <= 82) return 'cloud-rain';
+            if (code <= 86) return 'snowflake';
+            return 'cloud-lightning'; // 95+
+        }
 
+        // 2. Detailed Weather Card (Chart + Sunset + ICONS)
         async function fetchDetailedWeather(coords, dateStr) {
             const [lat, long] = coords.split(',');
             try {
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&daily=temperature_2m_max,temperature_2m_min,sunset&hourly=temperature_2m&start_date=${dateStr}&end_date=${dateStr}&temperature_unit=celsius&timezone=auto`;
+                // Add weathercode to fetching
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&daily=temperature_2m_max,temperature_2m_min,sunset&hourly=temperature_2m,weathercode&start_date=${dateStr}&end_date=${dateStr}&temperature_unit=celsius&timezone=auto`;
                 const res = await fetch(url); 
                 const json = await res.json();
 
@@ -930,9 +928,11 @@
                 }
 
                 if(json.hourly && json.hourly.temperature_2m) {
-                    const hours = json.hourly.temperature_2m.slice(9, 22); 
-                    currentHourlyTemps = hours;
-                    drawChart(hours);
+                    const hoursTemp = json.hourly.temperature_2m.slice(9, 22); // 9am to 9pm inclusive
+                    const hoursCode = json.hourly.weathercode.slice(9, 22);
+                    currentHourlyTemps = hoursTemp;
+                    currentHourlyCodes = hoursCode; // Store codes
+                    drawChart(hoursTemp, hoursCode);
                 }
             } catch (e) { 
                 console.error("Weather error", e); 
@@ -941,16 +941,23 @@
             }
         }
 
-        function drawChart(temps) {
+        function drawChart(temps, codes) {
             if (!temps) temps = currentHourlyTemps;
+            if (!codes) codes = currentHourlyCodes;
+            
             if (!temps || temps.length === 0) return;
 
             const container = document.querySelector('.wd-chart-container');
             const svg = document.getElementById('w-chart');
+            const iconsLayer = document.getElementById('chart-icons-layer');
+            
             const w = container.getBoundingClientRect().width || 300;
-            const h = 150;
+            const h = 160; // Match CSS height
 
+            // Clear previous content
             svg.innerHTML = '';
+            iconsLayer.innerHTML = ''; // Clear icons
+            
             svg.removeAttribute('preserveAspectRatio');
             svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
@@ -963,31 +970,65 @@
             let circles = "";
             let labels = "";
             let timeLabels = "";
-            let areaPath = `M ${padding},${h-20} `;
+            // Shift chart down to make room for icons at top
+            // Height usage: 
+            // 0-30px: Icons area
+            // 30-130px: Graph area (100px height)
+            // 130-150px: Time labels
+            
+            const chartTop = 30;
+            const chartBottom = h - 20; 
+            const graphHeight = chartBottom - chartTop - 20; // buffer for temp text
+
+            let areaPath = `M ${padding},${chartBottom} `;
             const stepX = (w - padding * 2) / (temps.length - 1);
 
             temps.forEach((t, i) => {
                 const x = padding + i * stepX;
-                const graphBottom = h - 20; 
-                const graphHeight = graphBottom - padding - 20; 
-                const y = graphBottom - ((t - minTemp) / range) * graphHeight;
+                const y = chartBottom - ((t - minTemp) / range) * graphHeight;
                 
                 points += `${x},${y} `;
                 areaPath += `L ${x},${y} `;
 
+                // Graph Dots & Temp Text
                 circles += `<circle cx="${x}" cy="${y}" r="3" class="chart-dot" />`;
                 labels += `<text x="${x}" y="${y - 10}" class="chart-text">${Math.round(t)}°</text>`;
                 
+                // Time Label Logic
                 let timeVal = (9 + i);
-                let displayTime = timeVal;
-                if (timeVal > 12) displayTime -= 12;
-                timeLabels += `<text x="${x}" y="${h - 5}" class="chart-label">${displayTime}時</text>`;
+                let displayTime;
+                if (timeVal === 12) {
+                    displayTime = "中午";
+                } else {
+                    displayTime = timeVal;
+                    if (timeVal > 12) displayTime -= 12;
+                    displayTime += "時";
+                }
+                timeLabels += `<text x="${x}" y="${h - 5}" class="chart-label">${displayTime}</text>`;
+
+                // Icon Injection (HTML overlay)
+                // Position absolute div at x
+                // We use percentages if we want it perfectly robust on resize, or pixel based on 'x'
+                // Since we redraw on resize, pixel 'x' is fine.
+                if(codes && codes[i] !== undefined) {
+                    const iconName = getIconFromCode(codes[i]);
+                    const iconDiv = document.createElement('div');
+                    iconDiv.className = 'chart-icon-wrapper';
+                    iconDiv.style.left = `${x}px`;
+                    iconDiv.style.top = '5px'; // Fixed at top of container
+                    // Insert Lucide icon element
+                    iconDiv.innerHTML = `<i data-lucide="${iconName}"></i>`;
+                    iconsLayer.appendChild(iconDiv);
+                }
             });
             
             const lastX = padding + (temps.length - 1) * stepX;
-            areaPath += `L ${lastX},${h-20} Z`;
+            areaPath += `L ${lastX},${chartBottom} Z`;
 
             svg.innerHTML = `<path d="${areaPath}" class="chart-area" /><polyline points="${points}" class="chart-line" />${circles}${labels}${timeLabels}`;
+            
+            // IMPORTANT: Trigger Lucide to render the new icons we just added to DOM
+            lucide.createIcons();
         }
 
         window.addEventListener('resize', () => { drawChart(); });

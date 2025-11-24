@@ -88,6 +88,7 @@
             display: flex; justify-content: space-between; align-items: flex-start;
             transition: all 0.3s;
         }
+        
         .header-left h1 { font-size: 28px; font-weight: 800; margin: 0; letter-spacing: -0.5px; color: #000; }
         .header-left .subtitle { 
             font-size: 13px; color: var(--theme-color); font-weight: 700; 
@@ -384,8 +385,8 @@
     <div id="tab-flights" class="content-area">
         <div class="card animate-item">
             <div class="place-item no-arrow">
-                <div class="place-header"><span class="place-name">SFO ➝ LAS</span><span class="place-tag secondary">11/25 去程</span></div>
-                <p class="place-desc"><strong>西南航空 WN 3237</strong><br>Terminal 1 (Harvey Milk)</p>
+                <div class="place-header"><span class="place-name">SJC ➝ LAS</span><span class="place-tag secondary">11/25 去程</span></div>
+                <p class="place-desc"><strong>西南航空 WN 3237</strong><br>Terminal B (Check monitors)</p>
                 <div class="flight-time-row">
                     <div class="flight-time-col"><div class="ft-label">登機 Board</div><div class="ft-time" style="color:#2980b9">09:50</div></div>
                     <div class="flight-time-col"><div class="ft-label">起飛 Dep</div><div class="ft-time">10:20</div></div>
@@ -395,10 +396,9 @@
                 <div class="lounge-info">
                     <div style="min-width:20px;"><i data-lucide="armchair" size="20" color="#002663"></i></div>
                     <div class="lounge-text">
-                        <span class="lounge-badge">美國運通貴賓室</span><br>
-                        <strong>SFO: Terminal 2</strong><br>
-                        *Southwest 在 T1。T1 與 T2 有 Airside 連通道，步行約 5-10 分鐘，不需重過安檢。<br>
-                        <a href="https://queue.americanexpress.com/web/SFO_CENTURION_LOUNGE" target="_blank" style="color:#002663; font-weight:bold; text-decoration:underline; display:inline-block; margin-top:5px;">👉 線上加入等待名單</a>
+                        <span class="lounge-badge">The Club SJC 貴賓室</span><br>
+                        <strong>SJC: Terminal A (Gate A15)</strong><br>
+                        *Southwest 在 Terminal B。Terminals A & B 互通，步行約 5-10 分鐘可達 A15，不需重過安檢。<br>
                     </div>
                 </div>
                 <a href="https://www.flightaware.com/live/flight/SWA3237" target="_blank" class="btn-action" style="background:#f0f8ff; color:#2980b9"><i data-lucide="radar" size="16"></i> 狀態追蹤</a>
@@ -407,7 +407,7 @@
         <div class="card animate-item">
             <div class="place-item no-arrow">
                 <div class="place-header">
-                    <span class="place-name">LAS ➝ SFO</span>
+                    <span class="place-name">LAS ➝ SJC</span>
                     <span class="place-tag secondary">12/1 回程</span>
                 </div>
                 <p class="place-desc"><strong>西南航空 WN 2487</strong><br>Terminal 1 (Gates B/C)</p>
@@ -419,7 +419,7 @@
                 </div>
                 <div class="lounge-info">
                     <div style="min-width:20px;"><i data-lucide="armchair" size="20" color="#002663"></i></div>
-                    <div class="lounge-text"><span class="lounge-badge">美國運通貴賓室</span><br><strong>LAS: Concourse D</strong><br>*需搭乘 Blue Line Tram 前往 D Gates (安檢區內)。</div>
+                    <div class="lounge-text"><span class="lounge-badge">The Club LAS 貴賓室</span><br><strong>LAS: Concourse D</strong><br>*需搭乘 Blue Line Tram 前往 D Gates (安檢區內)。</div>
                 </div>
                 <a href="https://www.flightaware.com/live/flight/SWA2487" target="_blank" class="btn-action" style="background:#f0f8ff; color:#2980b9"><i data-lucide="radar" size="16"></i> 狀態追蹤</a>
             </div>
@@ -493,7 +493,7 @@
 
         // --- DATA ---
         const daysData = [
-            { date: "11/25", fullDate: "2025-11-25", week: "週二", title: "前往錫安", color: "#D35400", bgImg: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=1080", gradient: "linear-gradient(135deg, #f12711 0%, #f5af19 100%)", weatherLoc: "Springdale, UT", weatherQuery: "Springdale, UT", coords: "37.188,-112.998", mapUrl: "https://www.google.com/maps/dir/Harry+Reid+International+Airport/Costco+Wholesale,+Saint+George/Zion+National+Park+Visitor+Center/Zion+Inn,+Zion+Park+Boulevard,+Springdale,+UT", content: [
+            { date: "11/25", fullDate: "2025-11-25", week: "週二", title: "前往錫安", color: "#D35400", bgImg: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=1080", gradient: "linear-gradient(135deg, #ff4e50 0%, #f9d423 100%)", weatherLoc: "Springdale, UT", weatherQuery: "Springdale, UT", coords: "37.188,-112.998", mapUrl: "https://www.google.com/maps/dir/Harry+Reid+International+Airport/Costco+Wholesale,+Saint+George/Zion+National+Park+Visitor+Center/Zion+Inn,+Zion+Park+Boulevard,+Springdale,+UT", content: [
                 { name: "抵達賭城 & 取車", desc: "LAS 機場租車中心取車。", tag: "12:30 PM", info: "取車檢查：備胎、工具、空調。" },
                 { name: "St. George 補給", desc: "Costco/Walmart 買水、早餐。", tag: "2:30 PM", info: "建議購買：整箱水、能量棒、水果、簡易微波食品。" },
                 { name: "Zion Visitor Center", desc: "蓋印章 (5PM 關)。", tag: "4:30 PM", info: "詢問 The Narrows 水位狀況。" },
@@ -522,7 +522,7 @@
                 { name: "抵達 Vegas & 還車", desc: "先放行李再還車。", tag: "3:00 PM", info: "Holiday Inn Check-in。" },
                 { name: "Magic Mike Live", desc: "Sahara Hotel。", tag: "10:00 PM", info: "提早入場。" }
             ]},
-            { date: "11/29", fullDate: "2025-11-29", week: "週六", title: "賭城大秀", color: "#E91E63", bgImg: "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?q=80&w=1080", gradient: "linear-gradient(135deg, #FF512F 0%, #DD2476 100%)", weatherLoc: "Las Vegas, NV", weatherQuery: "Las Vegas, NV", coords: "36.169,-115.139", mapUrl: "https://www.google.com/maps/search/Las+Vegas+Strip", content: [
+            { date: "11/29", fullDate: "2025-11-29", week: "週六", title: "賭城大秀", color: "#F1C40F", bgImg: "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?q=80&w=1080", gradient: "linear-gradient(135deg, #FF512F 0%, #DD2476 100%)", weatherLoc: "Las Vegas, NV", weatherQuery: "Las Vegas, NV", coords: "36.169,-115.139", mapUrl: "https://www.google.com/maps/search/Las+Vegas+Strip", content: [
                 { name: "飯店巡禮", desc: "Bellagio, Venetian。", tag: "白天", info: "水舞、運河。" },
                 { name: "MJ One", desc: "Mandalay Bay。", tag: "6:30 PM", info: "太陽馬戲團經典。" },
                 { name: "X Country", desc: "Harrah's。", tag: "10:00 PM", info: "上空鄉村歌舞。" }
@@ -531,9 +531,9 @@
                 { name: "Fremont Street", desc: "舊城區天幕秀。", tag: "晚間", info: "氣氛狂野，LED 天幕。" },
                 { name: "伴手禮", desc: "M&M, Coca-Cola。", tag: "自由", info: "最後採買。" }
             ]},
-            { date: "12/1", fullDate: "2025-12-01", week: "週一", title: "返程", color: "#2196F3", bgImg: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1080", gradient: "linear-gradient(120deg, #2980B9 0%, #6DD5FA 100%)", weatherLoc: "SFO Airport, CA", weatherQuery: "San Francisco International Airport", coords: "37.621,-122.379", mapUrl: "https://www.google.com/maps/dir/Holiday+Inn+Express/Harry+Reid+International+Airport", content: [
+            { date: "12/1", fullDate: "2025-12-01", week: "週一", title: "返程", color: "#2196F3", bgImg: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1080", gradient: "linear-gradient(120deg, #2980B9 0%, #6DD5FA 100%)", weatherLoc: "SJC Airport, CA", weatherQuery: "San Jose Mineta International Airport", coords: "37.3639,-121.9289", mapUrl: "https://www.google.com/maps/dir/Holiday+Inn+Express/Harry+Reid+International+Airport", content: [
                 { name: "前往機場", desc: "搭 Uber/Lyft。", tag: "回程", info: "預留安檢時間。" },
-                { name: "飛回 SFO", desc: "WN 2487。", tag: "飛行", info: "收心上班！" }
+                { name: "飛回 SJC", desc: "WN 2487。", tag: "飛行", info: "收心上班！" }
             ]}
         ];
 
@@ -777,7 +777,7 @@
                 let html = `
                     <!-- Tips Card -->
                     <div class="card animate-item" style="margin-top:10px;">
-                        <div class="place-item" onclick="openModal('行前重要提醒', '別忘了這些！', '1. 下載離線地圖：\\n國家公園內(Zion, Bryce)大部分地區完全沒有訊號。出發前請在 Google Maps 下載「Utah」區域的離線地圖。\\n\\n2. 時區變換：\\nUtah (猶他州) 使用 MST 時間，比 Las Vegas/加州 (PST) 快一小時！手機會自動跳轉，但請留意手錶時間，避免錯過預約。\\n\\n3. 穿著建議：\\nBryce Canyon 海拔很高，非常冷（可能下雪），請帶羽絨衣、毛帽、手套。Vegas 晚上風大也偏涼。')">
+                        <div class="place-item" onclick="openModal('行前重要提醒', '別忘了這些！', '1. 下載離線地圖：\\n國家公園內(Zion, Bryce)大部分地區完全沒有訊號。出發前請在 Google Maps 下載「Utah」區域的離線地圖。\\n\\n2. 時區變換：\\nUtah (猶他州) 使用 MST 時間，比 Las Vegas/加州 (PST) 快一小時！手機會自動跳轉，但請留意手錶時間，避免錯過預約。\\n\\n3.穿著建議：\\nBryce Canyon 海拔很高，非常冷（可能下雪），請帶羽絨衣、毛帽、手套。Vegas 晚上風大也偏涼。')">
                             <div class="place-header"><span class="place-name">💡 重要提醒</span></div>
                             <p class="place-desc">離線地圖、時區變換、洋蔥式穿搭。</p>
                         </div>
@@ -934,6 +934,13 @@
                 document.getElementById('header-subtitle').style.color = '#27ae60';
                 if(document.getElementById('guide-content').innerHTML === "") renderGuideScroller();
                 if(document.getElementById('guide-scroller').children.length === 0) renderGuideScroller();
+            } else if (tabId === 'prep') {
+                document.getElementById('bg-prep').classList.add('active');
+                document.documentElement.style.setProperty('--theme-color', '#e67e22');
+                document.getElementById('header-title').innerText = "行前準備";
+                document.getElementById('header-subtitle').innerText = "Checklist";
+                document.getElementById('header-subtitle').style.color = '#e67e22';
+                renderPrepList(); // Ensure fresh render
             }
 
             document.getElementById('tab-' + tabId).classList.add('active');

@@ -38,7 +38,8 @@
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
             background-color: var(--bg-base);
             color: var(--text-primary);
-            height: 100%; width: 100%; position: fixed; 
+            /* 改用 inset: 0 確保填滿 */
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             overflow: hidden; overscroll-behavior: none;
         }
 
@@ -52,6 +53,7 @@
             opacity: 0;
             animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+
         .animate-item:nth-child(1) { animation-delay: 0.05s; }
         .animate-item:nth-child(2) { animation-delay: 0.1s; }
         .animate-item:nth-child(3) { animation-delay: 0.15s; }
@@ -60,7 +62,7 @@
 
         /* --- Backgrounds --- */
         .bg-container { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             z-index: -1; pointer-events: none; background-color: var(--bg-base);
         }
         .bg-image {
@@ -111,9 +113,11 @@
 
         /* --- Content --- */
         .content-area {
-            height: 100%; overflow-y: auto; overflow-x: hidden;
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            overflow-y: auto; overflow-x: hidden;
             overscroll-behavior-y: none; -webkit-overflow-scrolling: touch;
-            padding: calc(var(--safe-top) + 100px) 20px calc(var(--safe-bottom) + 80px);
+            /* 調整底部 padding 以適應新的 Tab Bar 高度 */
+            padding: calc(var(--safe-top) + 100px) 20px calc(var(--safe-bottom) + 90px);
             display: none; opacity: 0; transition: opacity 0.4s ease;
         }
         .content-area.active { display: block; opacity: 1; }
@@ -147,7 +151,7 @@
         }
         .chart-icon-wrapper svg { width: 16px; height: 16px; color: rgba(255,255,255,0.9); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); }
 
-        /* --- Scrollers (With New Borders) --- */
+        /* --- Scrollers --- */
         .day-scroller-container {
             position: sticky; top: 0; margin: -10px -20px 20px; padding: 15px 20px 10px;
             background: rgba(255,255,255,0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -157,18 +161,16 @@
         .day-scroller { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; scrollbar-width: none; }
         .day-scroller::-webkit-scrollbar { display: none; }
         
-        /* Updated Day Chip with colored border */
+        /* Day Chip */
         .day-chip {
             flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center;
             min-width: 68px; height: 64px; background: rgba(255,255,255,0.9); border-radius: 18px;
             font-size: 12px; color: var(--text-secondary); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             box-shadow: var(--shadow-sm); 
-            /* 關鍵修改：加入配合主題色的邊框 (透明度 70% 變淡) */
             border: 1.5px solid color-mix(in srgb, var(--theme-color), transparent 70%);
         }
         .day-chip span.d-date { font-size: 20px; font-weight: 800; color: #1c1c1e; margin-bottom: 2px; }
         .day-chip span.d-week { font-weight: 500; font-size: 11px; opacity: 0.8; }
-        
         .day-chip.active {
             background: var(--theme-color); color: white; 
             box-shadow: 0 8px 20px -5px var(--theme-color); 
@@ -176,14 +178,13 @@
         }
         .day-chip.active span.d-date { color: white; }
         
-        /* Updated Guide Chip with colored border */
+        /* Guide Chip */
         .guide-chip {
             flex: 0 0 auto; padding: 0 20px; height: 44px; 
             display: flex; align-items: center; justify-content: center;
             background: rgba(255,255,255,0.9); border-radius: 22px;
             font-size: 14px; font-weight: 700; color: var(--text-secondary);
             box-shadow: var(--shadow-sm); 
-            /* 關鍵修改：加入配合主題色的邊框 */
             border: 1.5px solid color-mix(in srgb, var(--theme-color), transparent 70%); 
             transition: all 0.3s;
         }
@@ -275,9 +276,32 @@
         .modal-desc { font-size: 17px; color: #3a3a3c; line-height: 1.6; white-space: pre-wrap; font-weight: 400; }
         .modal-close-btn { position: absolute; top: 25px; right: 25px; background: #f2f2f7; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 20px; color: #3c3c43; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 
-        /* --- Tab Bar --- */
-        .tab-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255,255,255,0.85); backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%); border-top: 0.5px solid rgba(0,0,0,0.15); display: flex; justify-content: space-around; padding-bottom: var(--safe-bottom); height: calc(60px + var(--safe-bottom)); z-index: 20; }
-        .tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; font-size: 10px; gap: 4px; cursor: pointer; transition: all 0.2s; }
+        /* --- Tab Bar (Fixed) --- */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            /* 增加不透明度，確保遮擋 */
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border-top: 0.5px solid rgba(0,0,0,0.15);
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            /* 使用 padding-bottom + env 來適應 iPhone 底部橫條 */
+            padding-top: 10px;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+            /* 不設定固定高度，由內容撐開 */
+            height: auto;
+            z-index: 100;
+        }
+        
+        .tab-item {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #999; font-size: 10px; gap: 4px; cursor: pointer; transition: all 0.2s;
+        }
         .tab-item.active { color: var(--theme-color); transform: translateY(-2px); }
         .tab-item.active svg { stroke-width: 2.5px; }
 
@@ -285,8 +309,9 @@
         .btn-action:active { transform: scale(0.96); opacity: 0.8; }
     </style>
 </head>
+<!-- Body Content (Same as previous, structure preserved) -->
 <body>
-
+    <!-- Backgrounds -->
     <div class="bg-container">
         <div id="bg-itinerary" class="bg-image active"></div>
         <div id="bg-flights" class="bg-image" style="background-image: url('https://images.unsplash.com/photo-1569154941061-e231b4725ef1?q=80&w=1080');"></div>
@@ -394,7 +419,7 @@
         </div>
     </div>
 
-    <!-- TAB 4: GUIDE (Includes Prep) -->
+    <!-- TAB 4: GUIDE -->
     <div id="tab-guide" class="content-area">
         <div class="day-scroller-container"><div class="day-scroller" id="guide-scroller"></div></div>
         <div id="guide-content"></div>
@@ -424,7 +449,8 @@
         let currentWeatherLoc = ""; // Store current location for click handler
         let currentHourlyCodes = []; // Store weather codes
 
-        // --- DATA ---
+        // --- DATA (Included as per latest updates) ---
+        // ... [Same Data Structure] ...
         const daysData = [
             { date: "11/25", fullDate: "2025-11-25", week: "週二", title: "前往錫安", color: "#D35400", bgImg: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=1080", weatherLoc: "Springdale", coords: "37.188,-112.998", mapUrl: "https://www.google.com/maps/dir/Harry+Reid+International+Airport/Costco+Wholesale,+Saint+George/Zion+National+Park+Visitor+Center/Zion+Inn,+Zion+Park+Boulevard,+Springdale,+UT", content: [
                 { name: "抵達賭城 & 取車", desc: "LAS 機場租車中心取車。", tag: "12:30 PM", info: "取車檢查：備胎、工具、空調。" },
@@ -519,7 +545,7 @@
                 { name: "Resorts World", tag: "吃貨", desc: "亞洲美食大集合。", info: "💬 **為什麼要去？**\n如果你懷念亞洲食物，這裡一定要來。Famous Foods Street Eats 集合了各種亞洲米其林小吃，像高級版的夜市。" },
                 { name: "The STRAT", tag: "刺激", desc: "在塔頂尖叫。", info: "💬 **為什麼要去？**\n如果你膽子大，頂樓有懸空在塔外的遊樂設施。如果膽子小，去觀景台喝杯酒看夜景也很棒。" },
                 { name: "Red Rock", tag: "放鬆", desc: "遠離塵囂的度假感。", info: "💬 **為什麼要去？**\n這是在地有錢人去的地方。離 Strip 有段距離，靠近紅岩峽谷，氛圍非常放鬆高級，沒有遊客的喧囂。" },
-                { name: "Wynn", tag: "花園", desc: "走進愛麗絲夢遊仙境。", info: "💬 **為什麼要去？**\n走進 Wynn 就像走進一個巨大的花園。每晚的 Lake of Dreams 水幕秀雖然怪怪的（有巨型青蛙唱歌），但免費又特別。" },
+                { name: "Wynn", tag: "花園", desc: "走進愛麗絲夢遊仙境。", info: "💬 **為什麼要去？**\n走進 Wynn就像走進一個巨大的花園。每晚的 Lake of Dreams 水幕秀雖然怪怪的（有巨型青蛙唱歌），但免費又特別。" },
                 { name: "Cosmopolitan", tag: "網美", desc: "住在水晶燈裡。", info: "💬 **為什麼要去？**\n年輕人的最愛。那個貫穿三層樓的水晶吊燈酒吧 (Chandelier Bar) 絕對是拍照聖地。記得去二樓吃 Eggslut。" },
                 { name: "Caesars Palace", tag: "浮誇", desc: "重回古羅馬。", info: "💬 **為什麼要去？**\n想體驗這種極致的奢華浮誇，就來這裡。Forum Shops 裡的旋轉手扶梯和會動的雕像秀是經典。" },
                 { name: "Paris", tag: "浪漫", desc: "鐵塔下的晚餐。", info: "💬 **為什麼要去？**\n鐵塔腳直接插進賭場屋頂的設計太酷了。推薦去 Mon Ami Gabi 吃飯，坐在戶外剛好可以看對面的 Bellagio 水舞。" },
@@ -859,13 +885,6 @@
                 document.getElementById('header-subtitle').style.color = '#27ae60';
                 if(document.getElementById('guide-content').innerHTML === "") renderGuideScroller();
                 if(document.getElementById('guide-scroller').children.length === 0) renderGuideScroller();
-            } else if (tabId === 'prep') {
-                document.getElementById('bg-prep').classList.add('active');
-                document.documentElement.style.setProperty('--theme-color', '#e67e22');
-                document.getElementById('header-title').innerText = "行前準備";
-                document.getElementById('header-subtitle').innerText = "Checklist";
-                document.getElementById('header-subtitle').style.color = '#e67e22';
-                renderPrepList(); // Ensure fresh render
             }
 
             document.getElementById('tab-' + tabId).classList.add('active');

@@ -38,7 +38,6 @@
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
             background-color: var(--bg-base);
             color: var(--text-primary);
-            /* 改用 inset: 0 確保填滿 */
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             overflow: hidden; overscroll-behavior: none;
         }
@@ -53,7 +52,6 @@
             opacity: 0;
             animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-
         .animate-item:nth-child(1) { animation-delay: 0.05s; }
         .animate-item:nth-child(2) { animation-delay: 0.1s; }
         .animate-item:nth-child(3) { animation-delay: 0.15s; }
@@ -61,10 +59,7 @@
         .animate-item:nth-child(5) { animation-delay: 0.25s; }
 
         /* --- Backgrounds --- */
-        .bg-container { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            z-index: -1; pointer-events: none; background-color: var(--bg-base);
-        }
+        .bg-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; background-color: var(--bg-base); }
         .bg-image {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-size: cover; background-position: center;
@@ -116,16 +111,13 @@
             position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             overflow-y: auto; overflow-x: hidden;
             overscroll-behavior-y: none; -webkit-overflow-scrolling: touch;
-            padding: calc(var(--safe-top) + 100px) 20px calc(var(--safe-bottom) + 90px);
+            padding: calc(var(--safe-top) + 100px) 20px calc(var(--safe-bottom) + 80px);
             display: none; opacity: 0; transition: opacity 0.4s ease;
         }
         .content-area.active { display: block; opacity: 1; }
 
-        /* 關鍵修正：增加住宿和交通第一個卡片的頂部間距 */
-        #tab-hotels .card:first-child, 
-        #tab-flights .card:first-child {
-            margin-top: 20px;
-        }
+        /* Spacing Fix for First Card */
+        #tab-hotels .card:first-child, #tab-flights .card:first-child { margin-top: 20px; }
 
         /* --- Weather Chart --- */
         .weather-detail-card {
@@ -141,7 +133,7 @@
         .wd-title { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; }
         .wd-info { text-align: right; font-size: 12px; font-weight: 600; opacity: 0.9; }
         
-        .wd-chart-container { width: 100%; height: 150px; position: relative; margin-top: 10px; }
+        .wd-chart-container { width: 100%; height: 160px; position: relative; margin-top: 10px; }
         .wd-chart-svg { width: 100%; height: 100%; overflow: visible; display: block; }
         .chart-area { fill: rgba(255,255,255,0.15); }
         .chart-line { fill: none; stroke: white; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.1)); }
@@ -245,114 +237,70 @@
         .hotel-date { font-size: 13px; color: #8e8e93; margin-top: 6px; display: block; font-weight: 600; }
 
         /* --- Packing List Styles --- */
-        .packing-header {
-            padding: 20px 20px 10px;
-        }
-        .progress-container {
-            width: 100%; height: 8px; background: #e5e5ea; border-radius: 4px; overflow: hidden; margin-top: 10px;
-        }
-        .progress-bar {
-            height: 100%; background: #34C759; width: 0%; transition: width 0.3s ease;
-        }
-        .progress-text {
-            font-size: 13px; color: #8e8e93; font-weight: 600; margin-top: 8px; display: flex; justify-content: space-between;
-        }
-        
-        .checkbox-item {
-            display: flex; align-items: center; padding: 16px 20px; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05);
-            transition: background 0.2s;
-        }
+        .packing-header { padding: 20px 20px 10px; }
+        .progress-container { width: 100%; height: 8px; background: #e5e5ea; border-radius: 4px; overflow: hidden; margin-top: 10px; }
+        .progress-bar { height: 100%; background: #34C759; width: 0%; transition: width 0.3s ease; }
+        .progress-text { font-size: 13px; color: #8e8e93; font-weight: 600; margin-top: 8px; display: flex; justify-content: space-between; }
+        .checkbox-item { display: flex; align-items: center; padding: 16px 20px; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05); transition: background 0.2s; }
         .checkbox-item:last-child { border-bottom: none; }
         .checkbox-item:active { background: rgba(0,0,0,0.02); }
-        
-        .custom-checkbox {
-            width: 24px; height: 24px; border-radius: 6px; border: 2px solid #c7c7cc; margin-right: 15px;
-            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
-        }
-        .checkbox-item.checked .custom-checkbox {
-            background: #34C759; border-color: #34C759;
-        }
-        .checkbox-item.checked .place-name {
-            color: #aeaeb2; text-decoration: line-through;
-        }
+        .custom-checkbox { width: 24px; height: 24px; border-radius: 6px; border: 2px solid #c7c7cc; margin-right: 15px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .checkbox-item.checked .custom-checkbox { background: #34C759; border-color: #34C759; }
+        .checkbox-item.checked .place-name { color: #aeaeb2; text-decoration: line-through; }
         .check-icon { color: white; opacity: 0; transform: scale(0.5); transition: all 0.2s; }
         .checkbox-item.checked .check-icon { opacity: 1; transform: scale(1); }
 
         /* --- Flight & Shuttle --- */
-        .flight-time-row {
-            display: flex; justify-content: space-between; align-items: center;
-            margin: 18px 0; padding: 12px 0; border-top: 1px dashed rgba(0,0,0,0.1); border-bottom: 1px dashed rgba(0,0,0,0.1);
-        }
+        .flight-time-row { display: flex; justify-content: space-between; align-items: center; margin: 18px 0; padding: 12px 0; border-top: 1px dashed rgba(0,0,0,0.1); border-bottom: 1px dashed rgba(0,0,0,0.1); }
         .flight-time-col { text-align: center; flex: 1; }
         .ft-label { font-size: 11px; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600; }
         .ft-time { font-size: 22px; font-weight: 800; color: #1c1c1e; font-variant-numeric: tabular-nums; }
         .ft-icon { color: #d1d1d6; margin: 0 10px; }
-        
-        .lounge-info {
-            background: #f2f2f7; padding: 14px; border-radius: 16px; margin-top: 12px; display: flex; gap: 12px; align-items: flex-start;
-        }
+        .lounge-info { background: #f2f2f7; padding: 14px; border-radius: 16px; margin-top: 12px; display: flex; gap: 12px; align-items: flex-start; }
         .lounge-text { font-size: 13px; color: #444; line-height: 1.5; font-weight: 500; }
         .lounge-badge { background: #002663; color: white; font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 800; display: inline-block; margin-bottom: 4px; }
-        
         .shuttle-block { padding: 24px; background: transparent; }
         .shuttle-title { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--theme-color); margin-bottom: 16px; font-size: 16px; }
         .shuttle-container { background: rgba(255,255,255,0.6); border-radius: 16px; padding: 16px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.5); }
 
         /* --- Modal --- */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3);
-            z-index: 200; opacity: 0; visibility: hidden; transition: all 0.3s;
-            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 200; opacity: 0; visibility: hidden; transition: all 0.3s; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
         .modal-overlay.open { opacity: 1; visibility: visible; }
-        .modal-sheet {
-            position: absolute; bottom: 0; left: 0; width: 100%; background: #fff;
-            border-radius: 30px 30px 0 0; padding: 30px 25px 60px;
-            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-            max-height: 85vh; overflow-y: auto;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
-        }
+        .modal-sheet { position: absolute; bottom: 0; left: 0; width: 100%; background: #fff; border-radius: 30px 30px 0 0; padding: 30px 25px 60px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1); max-height: 85vh; overflow-y: auto; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
         .modal-overlay.open .modal-sheet { transform: translateY(0); }
         .modal-handle { width: 40px; height: 5px; background: #e5e5ea; border-radius: 10px; margin: -10px auto 30px; }
         .modal-title { font-size: 26px; font-weight: 800; margin-bottom: 15px; color: #000; line-height: 1.2; }
         .modal-desc { font-size: 17px; color: #3a3a3c; line-height: 1.6; white-space: pre-wrap; font-weight: 400; }
-        .modal-close-btn {
-            position: absolute; top: 25px; right: 25px; background: #f2f2f7; border: none; 
-            width: 32px; height: 32px; border-radius: 50%; font-size: 20px; 
-            color: #3c3c43; display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-        }
+        .modal-close-btn { position: absolute; top: 25px; right: 25px; background: #f2f2f7; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 20px; color: #3c3c43; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 
-        /* --- Tab Bar (Fixed & Compact) --- */
+        /* --- Tab Bar (Fixed & Compact - iPhone 14 Optimized) --- */
         .tab-bar {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
-            background: rgba(255,255,255,0.98); /* 增加不透明度以遮蓋底部 */
+            /* 增加不透明度到 0.98，確保看不到底下的灰色 */
+            background: rgba(255,255,255,0.98); 
             backdrop-filter: blur(30px) saturate(180%);
             -webkit-backdrop-filter: blur(30px) saturate(180%);
             border-top: 0.5px solid rgba(0,0,0,0.15);
             display: flex;
             justify-content: space-around;
-            /* 關鍵修正：只給很少的 padding，讓 env() 決定高度 */
-            padding-top: 8px; 
-            padding-bottom: calc(2px + env(safe-area-inset-bottom)); /* 緊貼 Home Bar */
+            /* 緊湊佈局：縮減 padding-top，讓內容更靠近底部 */
+            padding-top: 6px; 
+            /* 直接使用 safe area，不加額外 px，減少白色區域高度 */
+            padding-bottom: env(safe-area-inset-bottom, 20px); 
             z-index: 100;
         }
         
         .tab-item {
             flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #999; font-size: 10px; gap: 4px; cursor: pointer; transition: all 0.2s;
+            color: #999; font-size: 10px; gap: 3px; cursor: pointer; transition: all 0.2s;
         }
         .tab-item.active { color: var(--theme-color); transform: translateY(-2px); }
         .tab-item.active svg { stroke-width: 2.5px; }
 
-        .btn-action {
-            display: inline-flex; align-items: center; gap: 8px; background: #f2f2f7; color: var(--theme-color); 
-            padding: 10px 20px; border-radius: 14px; font-size: 15px; font-weight: 600; text-decoration: none; margin-top: 15px;
-            transition: transform 0.2s;
-        }
+        .btn-action { display: inline-flex; align-items: center; gap: 8px; background: #f2f2f7; color: var(--theme-color); padding: 10px 20px; border-radius: 14px; font-size: 15px; font-weight: 600; text-decoration: none; margin-top: 15px; transition: transform 0.2s; }
         .btn-action:active { transform: scale(0.96); opacity: 0.8; }
     </style>
 </head>
@@ -930,13 +878,6 @@
                 document.getElementById('header-subtitle').style.color = '#27ae60';
                 if(document.getElementById('guide-content').innerHTML === "") renderGuideScroller();
                 if(document.getElementById('guide-scroller').children.length === 0) renderGuideScroller();
-            } else if (tabId === 'prep') {
-                document.getElementById('bg-prep').classList.add('active');
-                document.documentElement.style.setProperty('--theme-color', '#e67e22');
-                document.getElementById('header-title').innerText = "行前準備";
-                document.getElementById('header-subtitle').innerText = "Checklist";
-                document.getElementById('header-subtitle').style.color = '#e67e22';
-                renderPrepList(); // Ensure fresh render
             }
 
             document.getElementById('tab-' + tabId).classList.add('active');

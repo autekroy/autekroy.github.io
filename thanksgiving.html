@@ -38,6 +38,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
             background-color: var(--bg-base);
             color: var(--text-primary);
+            /* 改用 inset: 0 確保填滿 */
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             overflow: hidden; overscroll-behavior: none;
         }
@@ -87,6 +88,7 @@
             display: flex; justify-content: space-between; align-items: flex-start;
             transition: all 0.3s;
         }
+        
         .header-left h1 { font-size: 28px; font-weight: 800; margin: 0; letter-spacing: -0.5px; color: #000; }
         .header-left .subtitle { 
             font-size: 13px; color: var(--theme-color); font-weight: 700; 
@@ -120,22 +122,6 @@
             display: none; opacity: 0; transition: opacity 0.4s ease;
         }
         .content-area.active { display: block; opacity: 1; }
-
-        /* --- Card & Items --- */
-        /* 通用卡片樣式：增加底部間距 */
-        .card {
-            background: var(--card-blur); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
-            border-radius: 24px; padding: 0; 
-            margin-bottom: 20px; /* 增加間距 */
-            box-shadow: var(--shadow-md); overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.4);
-        }
-
-        /* 強制設定第一個卡片的頂部間距：適用於住宿與交通 */
-        #tab-hotels .card:first-child, 
-        #tab-flights .card:first-child {
-            margin-top: 24px !important;
-        }
 
         /* --- Weather Chart --- */
         .weather-detail-card {
@@ -220,7 +206,20 @@
         }
         .map-btn-compact:active { transform: scale(0.98); background: rgba(255,255,255,0.8); }
 
-        /* --- Place Items --- */
+        /* --- Card & Items --- */
+        .card {
+            background: var(--card-blur); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border-radius: 24px; padding: 0; margin-bottom: 16px;
+            box-shadow: var(--shadow-md); overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+
+        /* First Card Spacing */
+        #tab-hotels .card:first-child, 
+        #tab-flights .card:first-child {
+            margin-top: 24px;
+        }
+
         .place-item {
             padding: 22px 20px; border-bottom: 1px solid rgba(0,0,0,0.05); position: relative;
             transition: background 0.2s; cursor: pointer;
@@ -248,41 +247,83 @@
         .hotel-date { font-size: 13px; color: #8e8e93; margin-top: 6px; display: block; font-weight: 600; }
 
         /* --- Packing List Styles --- */
-        .packing-header { padding: 20px 20px 10px; }
-        .progress-container { width: 100%; height: 8px; background: #e5e5ea; border-radius: 4px; overflow: hidden; margin-top: 10px; }
-        .progress-bar { height: 100%; background: #34C759; width: 0%; transition: width 0.3s ease; }
-        .progress-text { font-size: 13px; color: #8e8e93; font-weight: 600; margin-top: 8px; display: flex; justify-content: space-between; }
-        .checkbox-item { display: flex; align-items: center; padding: 16px 20px; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05); transition: background 0.2s; }
+        .packing-header {
+            padding: 20px 20px 10px;
+        }
+        .progress-container {
+            width: 100%; height: 8px; background: #e5e5ea; border-radius: 4px; overflow: hidden; margin-top: 10px;
+        }
+        .progress-bar {
+            height: 100%; background: #34C759; width: 0%; transition: width 0.3s ease;
+        }
+        .progress-text {
+            font-size: 13px; color: #8e8e93; font-weight: 600; margin-top: 8px; display: flex; justify-content: space-between;
+        }
+        
+        .checkbox-item {
+            display: flex; align-items: center; padding: 16px 20px; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05);
+            transition: background 0.2s;
+        }
         .checkbox-item:last-child { border-bottom: none; }
         .checkbox-item:active { background: rgba(0,0,0,0.02); }
-        .custom-checkbox { width: 24px; height: 24px; border-radius: 6px; border: 2px solid #c7c7cc; margin-right: 15px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        .checkbox-item.checked .custom-checkbox { background: #34C759; border-color: #34C759; }
-        .checkbox-item.checked .place-name { color: #aeaeb2; text-decoration: line-through; }
+        
+        .custom-checkbox {
+            width: 24px; height: 24px; border-radius: 6px; border: 2px solid #c7c7cc; margin-right: 15px;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .checkbox-item.checked .custom-checkbox {
+            background: #34C759; border-color: #34C759;
+        }
+        .checkbox-item.checked .place-name {
+            color: #aeaeb2; text-decoration: line-through;
+        }
         .check-icon { color: white; opacity: 0; transform: scale(0.5); transition: all 0.2s; }
         .checkbox-item.checked .check-icon { opacity: 1; transform: scale(1); }
 
         /* --- Flight & Shuttle --- */
-        .flight-time-row { display: flex; justify-content: space-between; align-items: center; margin: 18px 0; padding: 12px 0; border-top: 1px dashed rgba(0,0,0,0.1); border-bottom: 1px dashed rgba(0,0,0,0.1); }
+        .flight-time-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin: 18px 0; padding: 12px 0; border-top: 1px dashed rgba(0,0,0,0.1); border-bottom: 1px dashed rgba(0,0,0,0.1);
+        }
         .flight-time-col { text-align: center; flex: 1; }
         .ft-label { font-size: 11px; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600; }
         .ft-time { font-size: 22px; font-weight: 800; color: #1c1c1e; font-variant-numeric: tabular-nums; }
         .ft-icon { color: #d1d1d6; margin: 0 10px; }
-        .lounge-info { background: #f2f2f7; padding: 14px; border-radius: 16px; margin-top: 12px; display: flex; gap: 12px; align-items: flex-start; }
+        
+        .lounge-info {
+            background: #f2f2f7; padding: 14px; border-radius: 16px; margin-top: 12px; display: flex; gap: 12px; align-items: flex-start;
+        }
         .lounge-text { font-size: 13px; color: #444; line-height: 1.5; font-weight: 500; }
         .lounge-badge { background: #002663; color: white; font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 800; display: inline-block; margin-bottom: 4px; }
+        
         .shuttle-block { padding: 24px; background: transparent; }
         .shuttle-title { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--theme-color); margin-bottom: 16px; font-size: 16px; }
         .shuttle-container { background: rgba(255,255,255,0.6); border-radius: 16px; padding: 16px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.5); }
 
         /* --- Modal --- */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 200; opacity: 0; visibility: hidden; transition: all 0.3s; backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3);
+            z-index: 200; opacity: 0; visibility: hidden; transition: all 0.3s;
+            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+        }
         .modal-overlay.open { opacity: 1; visibility: visible; }
-        .modal-sheet { position: absolute; bottom: 0; left: 0; width: 100%; background: #fff; border-radius: 30px 30px 0 0; padding: 30px 25px 60px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1); max-height: 85vh; overflow-y: auto; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
+        .modal-sheet {
+            position: absolute; bottom: 0; left: 0; width: 100%; background: #fff;
+            border-radius: 30px 30px 0 0; padding: 30px 25px 60px;
+            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+        }
         .modal-overlay.open .modal-sheet { transform: translateY(0); }
         .modal-handle { width: 40px; height: 5px; background: #e5e5ea; border-radius: 10px; margin: -10px auto 30px; }
         .modal-title { font-size: 26px; font-weight: 800; margin-bottom: 15px; color: #000; line-height: 1.2; }
         .modal-desc { font-size: 17px; color: #3a3a3c; line-height: 1.6; white-space: pre-wrap; font-weight: 400; }
-        .modal-close-btn { position: absolute; top: 25px; right: 25px; background: #f2f2f7; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 20px; color: #3c3c43; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .modal-close-btn {
+            position: absolute; top: 25px; right: 25px; background: #f2f2f7; border: none; 
+            width: 32px; height: 32px; border-radius: 50%; font-size: 20px; 
+            color: #3c3c43; display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
 
         /* --- Tab Bar (Fixed & Compact) --- */
         .tab-bar {
@@ -296,6 +337,7 @@
             border-top: 0.5px solid rgba(0,0,0,0.15);
             display: flex;
             justify-content: space-around;
+            /* 關鍵修正：只給很少的 padding，讓 env() 決定高度 */
             padding-top: 8px; 
             padding-bottom: calc(2px + env(safe-area-inset-bottom)); /* 緊貼 Home Bar */
             z-index: 100;
@@ -308,7 +350,11 @@
         .tab-item.active { color: var(--theme-color); transform: translateY(-2px); }
         .tab-item.active svg { stroke-width: 2.5px; }
 
-        .btn-action { display: inline-flex; align-items: center; gap: 8px; background: #f2f2f7; color: var(--theme-color); padding: 10px 20px; border-radius: 14px; font-size: 15px; font-weight: 600; text-decoration: none; margin-top: 15px; transition: transform 0.2s; }
+        .btn-action {
+            display: inline-flex; align-items: center; gap: 8px; background: #f2f2f7; color: var(--theme-color); 
+            padding: 10px 20px; border-radius: 14px; font-size: 15px; font-weight: 600; text-decoration: none; margin-top: 15px;
+            transition: transform 0.2s;
+        }
         .btn-action:active { transform: scale(0.96); opacity: 0.8; }
     </style>
 </head>
@@ -481,7 +527,7 @@
                 { name: "抵達 Vegas & 還車", desc: "先放行李再還車。", tag: "3:00 PM", info: "Holiday Inn Check-in。" },
                 { name: "Magic Mike Live", desc: "Sahara Hotel。", tag: "10:00 PM", info: "提早入場。" }
             ]},
-            { date: "11/29", fullDate: "2025-11-29", week: "週六", title: "賭城大秀", color: "#F1C40F", bgImg: "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?q=80&w=1080", gradient: "linear-gradient(135deg, #FF512F 0%, #DD2476 100%)", weatherLoc: "Las Vegas, NV", weatherQuery: "Las Vegas, NV", coords: "36.169,-115.139", mapUrl: "https://www.google.com/maps/search/Las+Vegas+Strip", content: [
+            { date: "11/29", fullDate: "2025-11-29", week: "週六", title: "賭城大秀", color: "#E91E63", bgImg: "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?q=80&w=1080", gradient: "linear-gradient(135deg, #FF512F 0%, #DD2476 100%)", weatherLoc: "Las Vegas, NV", weatherQuery: "Las Vegas, NV", coords: "36.169,-115.139", mapUrl: "https://www.google.com/maps/search/Las+Vegas+Strip", content: [
                 { name: "飯店巡禮", desc: "Bellagio, Venetian。", tag: "白天", info: "水舞、運河。" },
                 { name: "MJ One", desc: "Mandalay Bay。", tag: "6:30 PM", info: "太陽馬戲團經典。" },
                 { name: "X Country", desc: "Harrah's。", tag: "10:00 PM", info: "上空鄉村歌舞。" }
@@ -497,7 +543,7 @@
         ];
 
         const guideData = [
-            { category: "🎒 行前/打包", id: "prep", content: [] },
+            { category: "🎒 打包", id: "prep", content: [] },
             { category: "⛰️ 錫安", content: [
                 { name: "Checkerboard Mesa", tag: "地質", desc: "像棋盤一樣的岩山。", info: "💬 **為什麼要去？**\n這是東側入口最醒目的地標。岩石表面因為風蝕和凍融作用，形成了垂直和水平的溝槽，看起來就像巨大的棋盤。\n\n📍 **位置：**\n東側入口收費站剛進來就會看到。" },
                 { name: "Kolob Canyons", tag: "秘境", desc: "人少景美的紅色手指。", info: "💬 **為什麼要去？**\n這裡不在主峽谷區，而是在公園西北角（I-15 公路旁）。遊客非常少，巨大的紅色納瓦霍砂岩像手指一樣伸向天空，非常壯觀。\n\n🚗 **交通：**\n需要開車前往，無法從主峽谷搭 Shuttle 到達。" },
@@ -563,6 +609,8 @@
 
         // --- PREP LIST DATA ---
         const prepItems = [
+            "🩴 拖鞋 (飯店通常不提供)",
+            "🔥 暖暖包 (Bryce 會很冷)",
             "📻 對講機 (國家公園無訊號)",
             "🆔 護照 / ID / 駕照",
             "💳 信用卡 & 現金 (小費)",
@@ -736,7 +784,7 @@
                 let html = `
                     <!-- Tips Card -->
                     <div class="card animate-item" style="margin-top:10px;">
-                        <div class="place-item" onclick="openModal('行前重要提醒', '別忘了這些！', '1. 下載離線地圖：\\n國家公園內(Zion, Bryce)大部分地區完全沒有訊號。出發前請在 Google Maps 下載「Utah」區域的離線地圖。\\n\\n2. 時區變換：\\nUtah (猶他州) 使用 MST 時間，比 Las Vegas/加州 (PST) 快一小時！手機會自動跳轉，但請留意手錶時間，避免錯過預約。\\n\\n3.穿著建議：\\nBryce Canyon 海拔很高，非常冷（可能下雪），請帶羽絨衣、毛帽、手套。Vegas 晚上風大也偏涼。')">
+                        <div class="place-item" onclick="openModal('行前重要提醒', '別忘了這些！', '1. 下載離線地圖：\\n國家公園內(Zion, Bryce)大部分地區完全沒有訊號。出發前請在 Google Maps 下載「Utah」區域的離線地圖。\\n\\n2. 時區變換：\\nUtah (猶他州) 使用 MST 時間，比 Las Vegas/加州 (PST) 快一小時！手機會自動跳轉，但請留意手錶時間，避免錯過預約。\\n\\n3. 穿著建議：\\nBryce Canyon 海拔很高，非常冷（可能下雪），請帶羽絨衣、毛帽、手套。Vegas 晚上風大也偏涼。')">
                             <div class="place-header"><span class="place-name">💡 重要提醒</span></div>
                             <p class="place-desc">離線地圖、時區變換、洋蔥式穿搭。</p>
                         </div>

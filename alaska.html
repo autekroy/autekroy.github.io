@@ -7,8 +7,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="阿拉斯加極光行">
     
-    <!-- Icon -->
-    <link rel="apple-touch-icon" href="https://img.icons8.com/color/480/aurora-borealis.png">
+    <!-- Icon Updated -->
+    <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/480/aurora-borealis.png">
     
     <script src="https://unpkg.com/lucide@latest"></script>
 
@@ -1002,13 +1002,16 @@
                     // Aurora Chart Data (Nighttime 21:00 today - 03:00 tomorrow)
                     // 21:00 is index 21. 03:00 tomorrow is index 27 (24+3).
                     // Slice from 21 to 27 (6 hours: 21, 22, 23, 00, 01, 02)
-                    const nightClouds = json.hourly.cloud_cover.slice(21, 27);
-                    currentAuroraCloud = nightClouds;
-                    
-                    // Generate Mock KP based on Lat
-                    const latNum = parseFloat(lat);
-                    const isHighLat = latNum > 63; // Fairbanks is 64, Anchorage 61
-                    drawAuroraChart(nightClouds, isHighLat);
+                    // Ensure we have enough data (OpenMeteo gives full days)
+                    if (json.hourly.cloud_cover.length > 27) {
+                        const nightClouds = json.hourly.cloud_cover.slice(21, 27);
+                        currentAuroraCloud = nightClouds;
+                        
+                        // Generate Mock KP based on Lat
+                        const latNum = parseFloat(lat);
+                        const isHighLat = latNum > 63; // Fairbanks is 64, Anchorage 61
+                        drawAuroraChart(nightClouds, isHighLat);
+                    }
                 }
             } catch (e) { 
                 console.error("Weather error", e); 
@@ -1061,7 +1064,11 @@
                     const iconName = getIconFromCode(codes[i]);
                     const iconDiv = document.createElement('div');
                     iconDiv.className = 'chart-icon-wrapper';
-                    iconDiv.style.left = `${x}px`; 
+                    
+                    // Manually map SVG coordinate 'x' to percentage for HTML overlay
+                    const percentX = (x / w) * 100;
+                    
+                    iconDiv.style.left = `${percentX}%`; 
                     iconDiv.style.top = '10px'; 
                     iconDiv.innerHTML = `<i data-lucide="${iconName}" style="width:20px; height:20px;"></i>`;
                     iconsLayer.appendChild(iconDiv);

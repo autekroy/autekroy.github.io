@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="阿拉斯加極光行">
+    
+    <!-- Icon -->
+    <link rel="apple-touch-icon" href="https://img.icons8.com/color/480/aurora-borealis.png">
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --theme-color: #2E86C1; /* Default Ice Blue */
+            --text-primary: #1c1c1e;
+            --text-secondary: #8e8e93;
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+            --card-blur: rgba(255, 255, 255, 0.9); /* Slightly more opaque for contrast */
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+            --bg-base: #F2F2F7;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        /* --- iOS 鎖定畫面與彈性修正 --- */
+        html {
+            height: 100%; width: 100%; overflow: hidden; 
+            background-color: #f2f2f7; /* Light background default */
+            overscroll-behavior: none;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+            background-color: transparent; 
+            color: var(--text-primary);
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            overflow: hidden; overscroll-behavior: none;
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-item {
+            opacity: 0;
+            animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .animate-item:nth-child(1) { animation-delay: 0.05s; }
+        .animate-item:nth-child(2) { animation-delay: 0.1s; }
+        .animate-item:nth-child(3) { animation-delay: 0.15s; }
+        .animate-item:nth-child(4) { animation-delay: 0.2s; }
+        .animate-item:nth-child(5) { animation-delay: 0.25s; }
+
+        /* --- Backgrounds --- */
+        .bg-container { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: -1; 
+            pointer-events: none; background-color: #fff;
+        }
+        .bg-image {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center center;
+            transition: opacity 0.6s ease; opacity: 0; transform: scale(1.02);
+            z-index: 0;
+        }
+        .bg-image.active { opacity: 1; transform: scale(1); transition: opacity 0.6s ease, transform 10s linear; }
+        .bg-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            /* Cleaner gradient: Transparent top -> White bottom */
+            background: linear-gradient(to bottom, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.4) 30%, rgba(242,242,247,0.95) 85%);
+            z-index: 1; 
+            backdrop-filter: blur(0px); /* Removed blur to see image clearer */
+        }
+
+        /* --- Header --- */
+        header {
+            padding: calc(var(--safe-top) + 10px) 20px 10px;
+            background: rgba(255, 255, 255, 0.85); /* Whiter header */
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 0.5px solid rgba(0,0,0,0.05);
+            position: absolute; top: 0; left: 0; width: 100%; 
+            z-index: 10; 
+            display: flex; justify-content: space-between; align-items: flex-start;
+            transition: all 0.3s;
+        }
+       
+        .header-left h1 { font-size: 28px; font-weight: 800; margin: 0; letter-spacing: -0.5px; color: #000; }
+        .header-left .subtitle { 
+            font-size: 13px; color: var(--theme-color); font-weight: 700; 
+            margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; 
+            transition: color 0.3s ease;
+        }
+
+        .weather-widget {
+            text-align: right; background: rgba(255,255,255,0.8); padding: 6px 12px; border-radius: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: flex-end;
+            border: 1px solid rgba(255,255,255,0.4);
+            transition: opacity 0.3s ease, visibility 0.3s; cursor: pointer;
+        }
+        .weather-widget:active { transform: scale(0.95); background: rgba(255,255,255,0.8); }
+        .weather-temp { font-size: 20px; font-weight: 700; color: #333; line-height: 1; }
+        .weather-loc { font-size: 10px; color: #666; margin-top: 3px; font-weight: 600; text-transform: uppercase; }
+
+        #countdown-banner {
+            font-size: 11px; font-weight: 600; color: #fff; background: var(--theme-color);
+            padding: 4px 10px; border-radius: 20px; margin-top: 5px; display: inline-block;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); opacity: 0; animation: fadeUp 0.5s 0.5s forwards;
+            transition: background-color 0.3s ease;
+        }
+
+        /* --- Content --- */
+        .content-area {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            overflow-y: auto; overflow-x: hidden;
+            overscroll-behavior-y: none; -webkit-overflow-scrolling: touch;
+            padding: calc(var(--safe-top) + 100px) 20px calc(var(--safe-bottom) + 90px);
+            display: none; opacity: 0; transition: opacity 0.4s ease;
+            z-index: 5;
+        }
+        .content-area.active { display: block; opacity: 1; }
+
+        /* --- Weather Chart --- */
+        .weather-detail-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 24px; padding: 20px 15px; margin-bottom: 20px;
+            color: white; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
+            position: relative; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer; transition: transform 0.2s;
+        }
+        .weather-detail-card:active { transform: scale(0.98); opacity: 0.9; }
+        .wd-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; padding: 0 5px; }
+        .wd-title { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+        .wd-info { text-align: right; font-size: 12px; font-weight: 600; opacity: 0.9; }
+       
+        .wd-chart-container { width: 100%; height: 160px; position: relative; margin-top: 10px; }
+        .wd-chart-svg { width: 100%; height: 100%; overflow: visible; display: block; }
+        .chart-area { fill: rgba(255,255,255,0.15); }
+        .chart-line { fill: none; stroke: white; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.1)); }
+        .chart-dot { fill: white; stroke: rgba(0,0,0,0.1); stroke-width: 2px; }
+        .chart-text { font-size: 11px; fill: white; font-weight: 700; text-anchor: middle; text-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .chart-label { font-size: 10px; fill: rgba(255,255,255,0.8); text-anchor: middle; font-weight: 500; }
+       
+        /* Chart Icons */
+        #chart-icons-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .chart-icon-wrapper {
+            position: absolute; transform: translateX(-50%); display: flex; justify-content: center; align-items: center;
+        }
+        .chart-icon-wrapper svg { width: 16px; height: 16px; color: rgba(255,255,255,0.9); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.1)); }
+
+        /* --- Aurora Chart --- */
+        .aurora-detail-card {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); /* Aurora Green */
+            border-radius: 24px; padding: 20px 15px; margin-bottom: 20px;
+            color: white; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
+            position: relative; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer; transition: transform 0.2s;
+        }
+        /* Overwrite gradient dynamically in JS */
+        
+        .bar-kp { fill: rgba(255, 255, 255, 0.9); transition: height 0.5s ease; }
+        .line-cloud { fill: none; stroke: rgba(255,255,255,0.5); stroke-width: 2; stroke-dasharray: 4 2; }
+        .dot-cloud { fill: rgba(255,255,255,0.5); }
+
+        /* --- Scrollers --- */
+        .day-scroller-container {
+            position: sticky; top: 0; margin: -10px -20px 20px; padding: 15px 20px 10px;
+            background: rgba(255,255,255,0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            z-index: 5; border-bottom: 0.5px solid rgba(0,0,0,0.05);
+            mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+        }
+        .day-scroller { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; scrollbar-width: none; }
+        .day-scroller::-webkit-scrollbar { display: none; }
+       
+        /* Day Chip */
+        .day-chip {
+            flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-width: 68px; height: 64px; background: rgba(255,255,255,0.95); border-radius: 18px;
+            font-size: 12px; color: var(--text-secondary); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: var(--shadow-sm); 
+            border: 1.5px solid color-mix(in srgb, var(--theme-color), transparent 70%);
+        }
+        .day-chip span.d-date { font-size: 20px; font-weight: 800; color: #1c1c1e; margin-bottom: 2px; }
+        .day-chip span.d-week { font-weight: 500; font-size: 11px; opacity: 0.8; }
+        .day-chip.active {
+            background: var(--theme-color); color: white; 
+            box-shadow: 0 8px 20px -5px var(--theme-color); 
+            transform: translateY(-2px) scale(1.05); border-color: transparent;
+        }
+        .day-chip.active span.d-date { color: white; }
+       
+        /* Guide Chip */
+        .guide-chip {
+            flex: 0 0 auto; padding: 0 20px; height: 44px; 
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.9); border-radius: 22px;
+            font-size: 14px; font-weight: 700; color: var(--text-secondary);
+            box-shadow: var(--shadow-sm); 
+            border: 1.5px solid color-mix(in srgb, var(--theme-color), transparent 70%); 
+            transition: all 0.3s;
+        }
+        .guide-chip.active { 
+            background: var(--theme-color); color: white; 
+            box-shadow: 0 6px 15px -4px var(--theme-color); transform: translateY(-1px); border-color: transparent;
+        }
+
+        /* --- Map Button --- */
+        .map-btn-compact {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 14px; margin-bottom: 15px;
+            background: rgba(255,255,255,0.8); border-radius: 18px;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5);
+            color: var(--theme-color); font-weight: 700; font-size: 15px;
+            text-decoration: none; box-shadow: var(--shadow-sm);
+            transition: transform 0.2s, background 0.2s;
+        }
+        .map-btn-compact:active { transform: scale(0.98); background: rgba(255,255,255,0.9); }
+
+        /* --- Card & Items --- */
+        .card {
+            background: var(--card-blur); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+            border-radius: 24px; padding: 0; margin-bottom: 16px;
+            box-shadow: var(--shadow-md); overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+
+        /* First Card Spacing */
+        #tab-hotels .card:first-child, 
+        #tab-flights .card:first-child {
+            margin-top: 24px;
+        }
+
+        .place-item {
+            padding: 22px 20px; border-bottom: 1px solid rgba(0,0,0,0.05); position: relative;
+            transition: background 0.2s; cursor: pointer;
+        }
+        .place-item:active { background: rgba(0,0,0,0.03); }
+        .place-item:last-child { border-bottom: none; }
+        .place-item::after {
+            content: '›'; position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+            font-size: 22px; color: #c7c7cc; font-weight: 600;
+        }
+        .place-item.no-arrow::after { display: none; }
+
+        .place-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-right: 20px; }
+        .place-name { font-weight: 700; font-size: 18px; color: #1c1c1e; flex: 1; letter-spacing: -0.3px; }
+       
+        .place-tag { 
+            font-size: 11px; background: var(--theme-color); padding: 5px 10px; border-radius: 10px; 
+            color: white; font-weight: 700; white-space: nowrap; margin-left: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+        .place-tag.secondary { background: #e5e5ea; color: #666; box-shadow: none; }
+        .place-tag.highlight { background: #007AFF; color: white; box-shadow: 0 2px 6px rgba(0,122,255,0.3); }
+        .place-tag.dark { background: #333; color: white; }
+       
+        .place-desc { font-size: 15px; color: #666; line-height: 1.5; margin: 0; padding-right: 15px; }
+        .hotel-date { font-size: 13px; color: #8e8e93; margin-top: 6px; display: block; font-weight: 600; }
+
+        /* --- Packing List Styles --- */
+        .packing-header {
+            padding: 20px 20px 10px;
+        }
+        .progress-container {
+            width: 100%; height: 8px; background: #e5e5ea; border-radius: 4px; overflow: hidden; margin-top: 10px;
+        }
+        .progress-bar {
+            height: 100%; background: #34C759; width: 0%; transition: width 0.3s ease;
+        }
+        .progress-text {
+            font-size: 13px; color: #8e8e93; font-weight: 600; margin-top: 8px; display: flex; justify-content: space-between;
+        }
+       
+        .checkbox-item {
+            display: flex; align-items: center; padding: 16px 20px; cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05);
+            transition: background 0.2s;
+        }
+        .checkbox-item:last-child { border-bottom: none; }
+        .checkbox-item:active { background: rgba(0,0,0,0.02); }
+       
+        .custom-checkbox {
+            width: 24px; height: 24px; border-radius: 6px; border: 2px solid #c7c7cc; margin-right: 15px;
+            display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .checkbox-item.checked .custom-checkbox {
+            background: #34C759; border-color: #34C759;
+        }
+        .checkbox-item.checked .place-name {
+            color: #aeaeb2; text-decoration: line-through;
+        }
+        .check-icon { color: white; opacity: 0; transform: scale(0.5); transition: all 0.2s; }
+        .checkbox-item.checked .check-icon { opacity: 1; transform: scale(1); }
+
+        /* --- Flight & Shuttle --- */
+        .flight-time-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin: 18px 0; padding: 12px 0; border-top: 1px dashed rgba(0,0,0,0.1); border-bottom: 1px dashed rgba(0,0,0,0.1);
+        }
+        .flight-time-col { text-align: center; flex: 1; }
+        .ft-label { font-size: 11px; color: #8e8e93; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600; }
+        .ft-time { font-size: 22px; font-weight: 800; color: #1c1c1e; font-variant-numeric: tabular-nums; }
+        .ft-icon { color: #d1d1d6; margin: 0 10px; }
+       
+        .lounge-info {
+            background: #f2f2f7; padding: 14px; border-radius: 16px; margin-top: 12px; display: flex; gap: 12px; align-items: flex-start;
+        }
+        .lounge-text { font-size: 13px; color: #444; line-height: 1.5; font-weight: 500; }
+        .lounge-badge { background: #002663; color: white; font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 800; display: inline-block; margin-bottom: 4px; }
+       
+        .shuttle-block { padding: 24px; background: transparent; }
+        .shuttle-title { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--theme-color); margin-bottom: 16px; font-size: 16px; }
+        .shuttle-container { background: rgba(255,255,255,0.6); border-radius: 16px; padding: 16px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.5); }
+
+        /* --- Modal --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3);
+            z-index: 200; opacity: 0; visibility: hidden; transition: all 0.3s;
+            backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+        }
+        .modal-overlay.open { opacity: 1; visibility: visible; }
+        .modal-sheet {
+            position: absolute; bottom: 0; left: 0; width: 100%; background: #fff;
+            border-radius: 30px 30px 0 0; padding: 30px 25px 60px;
+            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+        }
+        .modal-overlay.open .modal-sheet { transform: translateY(0); }
+        .modal-handle { width: 40px; height: 5px; background: #e5e5ea; border-radius: 10px; margin: -10px auto 30px; }
+        .modal-title { font-size: 26px; font-weight: 800; margin-bottom: 15px; color: #000; line-height: 1.2; }
+        .modal-desc { font-size: 17px; color: #3a3a3c; line-height: 1.6; white-space: pre-wrap; font-weight: 400; }
+        .modal-close-btn {
+            position: absolute; top: 25px; right: 25px; background: #f2f2f7; border: none; 
+            width: 32px; height: 32px; border-radius: 50%; font-size: 20px; 
+            color: #3c3c43; display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+
+        /* --- Tab Bar (Fixed & Compact) --- */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255,255,255,0.98); 
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border-top: 0.5px solid rgba(0,0,0,0.15);
+            display: flex;
+            justify-content: space-around;
+            padding-top: 8px; 
+            padding-bottom: calc(2px + env(safe-area-inset-bottom)); 
+            z-index: 100; /* FIXED: Tab bar on top */
+        }
+       
+        .tab-item {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #999; font-size: 10px; gap: 3px; cursor: pointer; transition: all 0.2s;
+        }
+        .tab-item.active { color: var(--theme-color); transform: translateY(-2px); }
+        .tab-item.active svg { stroke-width: 2.5px; }
+
+        .btn-action {
+            display: inline-flex; align-items: center; gap: 8px; background: #f2f2f7; color: var(--theme-color); 
+            padding: 10px 20px; border-radius: 14px; font-size: 15px; font-weight: 600; text-decoration: none; margin-top: 15px;
+            transition: transform 0.2s;
+        }
+        .btn-action:active { transform: scale(0.96); opacity: 0.8; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-container">
+        <div id="bg-itinerary" class="bg-image active"></div>
+        <div id="bg-flights" class="bg-image" style="background-image: url('https://images.unsplash.com/photo-1542296332-2e44a9917ad2?q=80&w=1080');"></div>
+        <div id="bg-hotels" class="bg-image" style="background-image: url('https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1080');"></div>
+        <div id="bg-guide" class="bg-image" style="background-image: url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=1080');"></div>
+        <div class="bg-overlay"></div>
+    </div>
+
+    <header>
+        <div class="header-left">
+            <h1 id="header-title">✨ 阿拉斯加極光行 ✨</h1>
+            <div class="subtitle" id="header-subtitle">Overview</div>
+            <div id="countdown-banner">即將出發 ✈️</div>
+        </div>
+        <div class="weather-widget" id="header-weather-widget" onclick="openCurrentWeather()">
+            <span class="weather-temp" id="current-temp">--°</span>
+            <span class="weather-loc" id="current-loc">LOADING</span>
+        </div>
+    </header>
+
+    <!-- TAB 1: ITINERARY -->
+    <div id="tab-itinerary" class="content-area active">
+        <div class="day-scroller-container"><div class="day-scroller"></div></div>
+        <div id="day-content"></div>
+    </div>
+
+    <!-- TAB 2: FLIGHTS -->
+    <div id="tab-flights" class="content-area">
+        <!-- Flight cards here (unchanged) -->
+        <div class="card animate-item">
+            <div class="place-item no-arrow">
+                <div class="place-header">
+                    <span class="place-name">去程: SJC ➝ ANC</span>
+                    <span class="place-tag secondary">12/26</span>
+                </div>
+                <div style="margin-top:10px; border-left: 2px solid #ddd; padding-left: 10px;">
+                    <p class="place-desc"><strong>AS 762</strong>: SJC ➝ SEA</p>
+                    <a href="https://www.google.com/search?q=Alaska+Airlines+762+status+2025-12-26" target="_blank" class="btn-action" style="font-size:12px; padding: 5px 10px; margin-top:5px;"><i data-lucide="plane-takeoff"></i> 追蹤 AS762</a>
+                </div>
+                <div style="margin: 10px 0; color:#8e8e93; font-size:12px; padding-left: 12px;">
+                    <i data-lucide="clock" size="12"></i> 西雅圖 (SEA) 轉機
+                </div>
+                <div style="margin-bottom:10px; border-left: 2px solid #2E86C1; padding-left: 10px;">
+                    <p class="place-desc"><strong>AS 129</strong>: SEA ➝ ANC</p>
+                     <a href="https://www.google.com/search?q=Alaska+Airlines+129+status+2025-12-26" target="_blank" class="btn-action" style="font-size:12px; padding: 5px 10px; margin-top:5px;"><i data-lucide="plane-takeoff"></i> 追蹤 AS129</a>
+                </div>
+                <div class="lounge-info">
+                     <div class="lounge-text">預計抵達安克拉治時間依當日航班為準。</div>
+                </div>
+            </div>
+        </div>
+        <div class="card animate-item">
+            <div class="place-item no-arrow">
+                <div class="place-header">
+                    <span class="place-name">移動: ANC ➝ FAI</span>
+                    <span class="place-tag secondary">12/28</span>
+                </div>
+                 <p class="place-desc"><strong>AS 108</strong>: Anchorage to Fairbanks</p>
+                 <div class="flight-time-row">
+                    <div class="flight-time-col"><div class="ft-label">起飛</div><div class="ft-time">10:20</div></div>
+                    <i data-lucide="arrow-right" size="16" class="ft-icon"></i>
+                    <div class="flight-time-col"><div class="ft-label">抵達</div><div class="ft-time">11:30</div></div>
+                </div>
+                 <a href="https://www.google.com/search?q=Alaska+Airlines+108+status+2025-12-28" target="_blank" class="btn-action" style="width:100%; justify-content:center;"><i data-lucide="radar"></i> AS108 即時動態</a>
+            </div>
+        </div>
+        <div class="card animate-item">
+            <div class="place-item no-arrow">
+                <div class="place-header">
+                    <span class="place-name">回程: FAI ➝ SJC</span>
+                    <span class="place-tag secondary">12/31</span>
+                </div>
+                <div style="margin-top:10px; border-left: 2px solid #ddd; padding-left: 10px;">
+                    <p class="place-desc"><strong>AS 106</strong>: FAI ➝ SEA</p>
+                    <a href="https://www.google.com/search?q=Alaska+Airlines+106+status+2025-12-31" target="_blank" class="btn-action" style="font-size:12px; padding: 5px 10px; margin-top:5px;"><i data-lucide="plane-takeoff"></i> 追蹤 AS106</a>
+                </div>
+                <div style="margin: 10px 0; color:#8e8e93; font-size:12px; padding-left: 12px;">
+                    <i data-lucide="clock" size="12"></i> 西雅圖 (SEA) 轉機
+                </div>
+                <div style="margin-bottom:10px; border-left: 2px solid #2E86C1; padding-left: 10px;">
+                    <p class="place-desc"><strong>AS 761</strong>: SEA ➝ SJC</p>
+                     <a href="https://www.google.com/search?q=Alaska+Airlines+761+status+2025-12-31" target="_blank" class="btn-action" style="font-size:12px; padding: 5px 10px; margin-top:5px;"><i data-lucide="plane-takeoff"></i> 追蹤 AS761</a>
+                </div>
+            </div>
+        </div>
+         <div class="card animate-item">
+                 <div class="place-item no-arrow">
+                    <div class="place-header"><span class="place-name">Fairbanks 租車</span><span class="place-tag secondary">Enterprise</span></div>
+                    <p class="place-desc" style="margin-top:5px;"><strong>取車：</strong> 12/29 12:00 PM @ FAI Airport<br><strong>還車：</strong> 12/31 12:00 PM @ FAI Airport</p>
+                    <div class="lounge-info" style="margin-top:8px;">
+                        <div class="lounge-text">⚠️ 務必檢查 Engine Block Heater 線材。</div>
+                   </div>
+                </div>
+            </div>
+    </div>
+
+    <!-- TAB 3: HOTELS -->
+    <div id="tab-hotels" class="content-area">
+        <div class="card animate-item">
+            <div class="place-item" onclick="openModal('Hyatt Place Anchorage', 'Midtown 舒適住宿', '12/26 下午入住。\\n位於 Midtown 核心區域，距離機場與市區都很近。提供免費早餐。')">
+                <div class="place-header"><span class="place-name">Hyatt Place Midtown</span><span class="place-tag highlight" style="background:#2E86C1">2 晚</span></div>
+                <span class="hotel-date">12/26 - 12/28</span>
+                <p class="place-desc">📍 Anchorage, AK</p>
+                <a href="https://www.google.com/maps/search/?api=1&query=Hyatt+Place+Anchorage+Midtown" target="_blank" class="btn-action" style="background:#eaf2f8; color:#2E86C1" onclick="event.stopPropagation()"><i data-lucide="map-pin"></i> 導航</a>
+            </div>
+        </div>
+        <div class="card animate-item">
+            <div class="place-item" onclick="openModal('Pike\'s Waterfront Lodge', '河畔木屋度假村', '12/28 中午抵達後入住。\\n位於 Chena River 河畔，有著名的 Pikes Landing 餐廳。\\n⚠️ 重要：抵達機場後，請打電話詢問 Free Shuttle 接駁車班次。')">
+                <div class="place-header"><span class="place-name">Pike's Waterfront Lodge</span><span class="place-tag highlight" style="background:#27AE60">3 晚</span></div>
+                <span class="hotel-date">12/28 - 12/31</span>
+                <p class="place-desc">📍 Fairbanks, AK</p>
+                <a href="https://www.google.com/maps/search/?api=1&query=Pike's+Waterfront+Lodge" target="_blank" class="btn-action" style="background:#eafaf1; color:#27AE60" onclick="event.stopPropagation()"><i data-lucide="map-pin"></i> 導航</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: GUIDE (Includes Prep) -->
+    <div id="tab-guide" class="content-area">
+        <div class="day-scroller-container"><div class="day-scroller" id="guide-scroller"></div></div>
+        <div id="guide-content"></div>
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal-overlay" id="detail-modal" onclick="closeModal()">
+        <div class="modal-sheet" onclick="event.stopPropagation()">
+            <div class="modal-handle"></div>
+            <button class="modal-close-btn" onclick="closeModal()">×</button>
+            <div class="modal-title" id="modal-title">Title</div>
+            <div class="modal-desc" id="modal-desc">Description</div>
+        </div>
+    </div>
+
+    <!-- TAB BAR -->
+    <nav class="tab-bar">
+        <div class="tab-item active" onclick="switchTab('itinerary', this)"><i data-lucide="map" size="24"></i><span>行程</span></div>
+        <div class="tab-item" onclick="switchTab('flights', this)"><i data-lucide="plane" size="24"></i><span>交通</span></div>
+        <div class="tab-item" onclick="switchTab('hotels', this)"><i data-lucide="bed" size="24"></i><span>住宿</span></div>
+        <div class="tab-item" onclick="switchTab('guide', this)"><i data-lucide="book-open" size="24"></i><span>指南</span></div>
+    </nav>
+
+    <script>
+        lucide.createIcons();
+        let currentHourlyTemps = [];
+        let currentWeatherLoc = ""; // Store current location for click handler
+        let currentHourlyCodes = []; // Store weather codes
+        let currentAuroraCloud = []; // Store cloud cover for aurora
+
+        // --- DATA ---
+        const daysData = [
+            { date: "12/26", fullDate: "2025-12-26", week: "週五", title: "抵達安克拉治", color: "#2E86C1", bgImg: "https://images.unsplash.com/photo-1483921020237-2ff51e8e4b22?q=80&w=1080", gradient: "linear-gradient(135deg, #1A2980 0%, #26D0CE 100%)", weatherLoc: "Anchorage, AK", coords: "61.2181,-149.9003", mapUrl: "https://www.google.com/maps/search/Anchorage+Airport", content: [
+                { name: "🛬 抵達 & 集合", desc: "我: 1:30 PM | 姜: 2:00+ PM", tag: "機場", info: "集合後叫 Uber 前往飯店 Check-in。" },
+                { name: "🎿 取雪具", desc: "前往租賃店取裝備。", tag: "重要", info: "試穿雪靴大小，確認保暖度。" },
+                { name: "🛍️ 採買 & 逛街", desc: "Outlet & 超市補給。", tag: "補給", info: "購買冰川徒步與北極圈之旅需要的食物（三明治、能量棒、水）。" }
+            ]},
+            { date: "12/27", fullDate: "2025-12-27", week: "週六", title: "馬塔努斯卡冰川", color: "#00BCD4", bgImg: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?q=80&w=1080", gradient: "linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%)", weatherLoc: "Sutton, AK", coords: "61.7114,-148.8872", mapUrl: "https://www.google.com/maps/search/Matanuska+Glacier", content: [
+                { name: "🚌 集合出發", desc: "準備前往冰川。", tag: "7:50 AM", info: "穿著保暖，帶好相機與乾糧。" },
+                { name: "🧊 冰川徒步", desc: "Matanuska Glacier Hike。", tag: "全天", info: "跟隨嚮導，注意冰裂縫，穿好冰爪。" },
+                { name: "🍽️ 返回市區", desc: "晚餐 & 休息。", tag: "5:00 PM", info: "返回安克拉治市區，找家溫暖的餐廳吃晚餐。" }
+            ]},
+            { date: "12/28", fullDate: "2025-12-28", week: "週日", title: "飛往費爾班克斯", color: "#8E44AD", bgImg: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=1080", gradient: "linear-gradient(135deg, #cc2b5e 0%, #753a88 100%)", weatherLoc: "Fairbanks, AK", coords: "64.8378,-147.7164", mapUrl: "https://www.google.com/maps/dir/Anchorage/Fairbanks", content: [
+                { name: "🏨 Check-out", desc: "前往機場。", tag: "8:20 AM", info: "預留時間過安檢。" },
+                { name: "✈️ 飛往 Fairbanks", desc: "AS 108: 10:20 Dep - 11:30 Arr。", tag: "飛行", info: "抵達後叫車去飯店 Check-in。*打電話問 Free Shuttle 頻率。" },
+                { name: "❄️ 北極圈之旅", desc: "集合出發！", tag: "12:30 PM", info: "漫長的車程，準備好頸枕和零食。預計隔天凌晨 3:00 返回。" }
+            ]},
+            { date: "12/29", fullDate: "2025-12-29", week: "週一", title: "費爾班克斯", color: "#34495E", bgImg: "https://images.unsplash.com/photo-1518182170546-0766aaef3194?q=80&w=1080", gradient: "linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%)", weatherLoc: "Fairbanks, AK", coords: "64.8378,-147.7164", mapUrl: "https://www.google.com/maps/search/Museum+of+the+North", content: [
+                { name: "🚗 取車", desc: "Enterprise @ FAI。", tag: "12:00 PM", info: "檢查 Engine Block Heater 線材。" },
+                { name: "🏛️ 市區觀光", desc: "酒廠 或 北方極地博物館。", tag: "下午", info: "Museum of the North 值得一去，了解極地生態。" },
+                { name: "👀 探路", desc: "Murphy Dome。", tag: "路況", info: "趁天亮確認前往 Murphy Dome 的路況，評估晚上是否適合自行前往追光。" }
+            ]},
+            { date: "12/30", fullDate: "2025-12-30", week: "週二", title: "狗拉雪橇 & 極光", color: "#27AE60", bgImg: "https://images.unsplash.com/photo-1579033461380-adb47c3eb938?q=80&w=1080", gradient: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)", weatherLoc: "Fairbanks, AK", coords: "64.8378,-147.7164", mapUrl: "https://www.google.com/maps/search/Fairbanks+Dog+Sledding", content: [
+                { name: "🐕 狗拉雪橇", desc: "10:00 出門，11:00 抵達。", tag: "11:00 AM", info: "與雪橇犬互動，注意保暖（風很大）。" },
+                { name: "🧊 冰雕展", desc: "參觀 Ice Art。", tag: "下午", info: "欣賞世界級的冰雕作品。" },
+                { name: "🌌 極光團", desc: "追逐歐若拉。", tag: "8:00 PM", info: "跟隨導遊前往無光害地區等待極光爆發。" }
+            ]},
+            { date: "12/31", fullDate: "2025-12-31", week: "週三", title: "返程", color: "#95A5A6", bgImg: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=1080", gradient: "linear-gradient(120deg, #bdc3c7 0%, #2c3e50 100%)", weatherLoc: "Fairbanks Airport", coords: "64.8151,-147.8564", mapUrl: "https://www.google.com/maps", content: [
+                { name: "🎿 還雪具", desc: "歸還租賃裝備。", tag: "10:00 AM", info: "檢查裝備是否齊全無損壞。" },
+                { name: "🚗 還車", desc: "Enterprise @ FAI。", tag: "12:00 PM", info: "加滿油，清理車內垃圾。" },
+                { name: "✈️ 飛往 SJC", desc: "AS 106 / AS 761。", tag: "返家", info: "經西雅圖轉機返回 San Jose。" }
+            ]}
+        ];
+
+        const guideData = [
+            { category: "🎒 準備", id: "prep", content: [] },
+            { category: "🚗 交通指南", content: [
+                { name: "Engine Block Heater", tag: "必讀", desc: "停車一定要插電！", info: "💬 **為什麼？**\nFairbanks 冬天極冷，停車超過 2-3 小時未發動，引擎油路可能凍結。\n\n🔌 **怎麼做？**\n車頭通常有一條插頭露出來，停車位前方會有插座。停好車後，務必將插頭插上。起步前記得拔掉！" },
+                { name: "雪地駕駛", tag: "安全", desc: "慢慢慢，不要急煞。", info: "💬 **技巧：**\n1. 煞車距離是平常的 3 倍，請保持超長車距。\n2. 若遇打滑，不要重踩煞車，輕放油門並將方向盤打向打滑方向。\n3. 車上隨時準備雪刷 (Snow Brush)。" },
+                { name: "離線地圖", tag: "APP", desc: "Google Maps 離線下載。", info: "💬 **區域：**\n請下載 Anchorage 到 Fairbanks 沿線，以及 Fairbanks 周邊（包含 Chena Hot Springs 路段）。很多地方沒有訊號。" }
+            ]},
+            { category: "🌅 日照與天氣", content: [
+                { name: "日照時間", tag: "極短", desc: "早上10點亮，下午3點黑。", info: "💬 **規劃建議：**\n因為日照時間非常短，戶外景點（如冰雕、博物館外觀、拍照）請務必安排在 11:00 AM - 2:00 PM 之間。下午 3 點後天黑適合室內活動或休息等待極光。" },
+                { name: "極光預測", tag: "APP", desc: "Aurora Forecast。", info: "💬 **推薦 APP：**\n1. My Aurora Forecast\n2. UAF Geophysical Institute (網站)\nKP 值大於 3 就很有機會看到。" },
+                { name: "保暖策略", tag: "穿搭", desc: "洋蔥式穿法，最外層防風。", info: "💬 **重點：**\n手腳最容易凍傷。請準備暖暖包貼在腳底，戴兩層手套（內層薄、外層厚防水）。" }
+            ]},
+            { category: "🐻 認識阿拉斯加", content: [
+                { name: "The Last Frontier", tag: "簡介", desc: "最後的邊疆。", info: "💬 **大得驚人：**\n阿拉斯加是美國最大的州（是德州的兩倍大！），但人口密度極低。這裡有美國最高的山峰（Denali）和數不清的冰川。\n\n🧊 **氣候：**\n內陸（如 Fairbanks）是大陸性氣候，冬天極冷且乾燥；沿海（如 Anchorage）受海洋調節，相對「溫暖」濕潤。" },
+                { name: "遇見 Moose (麋鹿)", tag: "安全", desc: "比熊還常見，也更危險。", info: "💬 **市區霸主：**\n在 Anchorage 和 Fairbanks 市區看到麋鹿逛大街是非常正常的。牠們體型巨大，冬天脾氣不好。\n\n⚠️ **應對：**\n絕對不要靠近！如果看到牠耳朵向後貼平，代表牠在生氣。請躲在樹或車子後面，不要奔跑。" },
+                { name: "原住民文化", tag: "人文", desc: "豐富的歷史底蘊。", info: "💬 **多元族群：**\n阿拉斯加有許多原住民族群，如 Inupiat, Yup'ik, Athabascan 等。你可以去 Fairbanks 的 Museum of the North 深入了解他們的狗拉雪橇歷史和極地生存智慧。" }
+            ]},
+            { category: "🌌 極光攻略", content: [
+                { name: "🔴 即時極光/雲圖查詢", tag: "Live", desc: "點擊查看 KP 值與預報網站。", info: "追極光最重要的就是 **KP值** (夠不夠強) 和 **天氣** (有沒有雲)。\n\n推薦使用以下權威網站查詢：\n\n1. **UAF Geophysical Institute**\n阿拉斯加大學官方預報，最準確的在地資料。\n\n2. **NOAA Space Weather**\n美國國家海洋暨大氣總署，提供 30 分鐘內的短期預測。\n\n👇 **點擊下方按鈕前往：**<br><br><a href='https://www.gi.alaska.edu/monitors/aurora-forecast' target='_blank' style='display:block; padding:12px; background:#2980b9; color:white; text-align:center; border-radius:8px; text-decoration:none; margin-bottom:10px; font-weight:bold;'>🚀 UAF 極光預報 (網站)</a><a href='https://www.swpc.noaa.gov/products/aurora-30-minute-forecast' target='_blank' style='display:block; padding:12px; background:#27ae60; color:white; text-align:center; border-radius:8px; text-decoration:none; font-weight:bold;'>🌍 NOAA 30分鐘分佈圖</a><a href='https://www.weather.gov/afg/' target='_blank' style='display:block; padding:12px; background:#8e44ad; color:white; text-align:center; border-radius:8px; text-decoration:none; margin-top:10px; font-weight:bold;'>☁️ Fairbanks 官方天氣 (雲量)</a>" },
+                { name: "極光是什麼？", tag: "科普", desc: "太陽風與大氣層的熱舞。", info: "💬 **原理：**\n太陽釋放的帶電粒子（太陽風）撞擊地球磁場，被引導到南北極，與大氣層中的氣體碰撞發光。\n\n🟢 **綠色：** 最常見，氧原子在較低高度碰撞。\n🔴 **紅色：** 較罕見，極強烈太陽風暴時，氧原子在高空碰撞。" },
+                { name: "KP 值解讀", tag: "指標", desc: "KP 越高，範圍越大。", info: "💬 **KP Index (0-9)：**\n- **KP 0-2:** 只有相機拍得到，肉眼看像灰色的雲。\n- **KP 3-4:** 肉眼可見淡淡的綠色光帶在舞動。\n- **KP 5+:** 極光大爆發 (Storm Level)，可能漫天飛舞，甚至出現紫色/紅色，就在頭頂上跳舞！" },
+                { name: "拍攝參數 (手機)", tag: "攝影", desc: "iPhone/Android 設定。", info: "📱 **iPhone:**\n開啟「夜間模式」，手持盡量穩住（3-10秒），最好用腳架（可開到30秒）。\n\n📱 **Android Pro Mode:**\n- ISO: 1600 - 3200\n- 快門 (Shutter): 5s - 15s\n- 對焦: 無限遠" },
+                { name: "拍攝參數 (相機)", tag: "攝影", desc: "大光圈是關鍵。", info: "📷 **設定建議：**\n- 模式: M (手動)\n- 光圈: 最大 (f/2.8 或更大)\n- ISO: 1600 - 6400 (依雜訊接受度)\n- 快門: 2s - 8s (太長極光會糊掉變一片綠)\n- 對焦: 手動對焦到無限遠 (找遠處燈光或星星)" }
+            ]},
+            { category: "💡 實用貼士", content: [
+                { name: "購物免稅！", tag: "省錢", desc: "Anchorage & Fairbanks 無州稅。", info: "💬 **盡情買：**\n阿拉斯加沒有「州銷售稅」(State Sales Tax)。Anchorage 和 Fairbanks 市區通常也沒有地方稅，所以標價多少就付多少！非常適合買始祖鳥、Patagonia 等戶外裝備或 iPhone。" },
+                { name: "小費文化", tag: "禮儀", desc: "美國標準 15-20%。", info: "💬 **餐廳：**\n午餐 15-18%，晚餐 18-20% 是標準。如果是 6 人以上大桌，餐廳可能會自動加收 18% Gratuity。\n\n💬 **導遊/司機：**\n極光團導遊如果不做，通常給 $10-20/人；接駁車司機幫忙搬行李給 $1-2/箱。" },
+                { name: "飲用水", tag: "生活", desc: "水龍頭水可以喝。", info: "💬 **水質：**\n阿拉斯加的自來水水質通常很好（來自冰川融水），可以直接生飲。如果不放心，飯店通常有濾水站。出門記得帶保溫瓶裝熱水！" },
+                { name: "緊急電話", tag: "安全", desc: "遇難請撥 911。", info: "💬 **求救：**\n遇到車禍、火災、急病或威脅生命的情況，直接撥打 911。如果在沒有訊號的地方，嘗試發送簡訊至 911 (Text-to-911) 在某些地區可能有效。" }
+            ]}
+        ];
+
+        // --- PREP LIST DATA ---
+        const prepItems = [
+            "🗺️ 載好離線地圖 (Anchorage/Fairbanks)",
+            "🌤️ 下載極光/天氣 APP",
+            "🔥 暖暖包 (大量，貼式與手握式)",
+            "📷 運動相機/腳架 (拍極光必備)",
+            "🕶️ 太陽眼鏡 (雪地反光強)",
+            "🔌 車充/行動電源 (低溫耗電快)",
+            "🧴 保濕乳液/護唇膏 (極乾)",
+            "🧤 雙層手套 & 毛帽",
+            "🧦 羊毛襪 (建議 Smartwool 等級)",
+            "🆔 駕照/信用卡/保險卡"
+        ];
+
+        // --- LOGIC ---
+        function renderDays() {
+            const scroller = document.querySelector('.day-scroller');
+            scroller.innerHTML = '';
+            daysData.forEach((day, index) => {
+                const chip = document.createElement('div');
+                chip.className = `day-chip ${index === 0 ? 'active' : ''} animate-item`;
+                chip.onclick = () => switchDay(index);
+                chip.innerHTML = `<span class="d-date">${day.date}</span><span class="d-week">${day.week}</span>`;
+                scroller.appendChild(chip);
+            });
+            switchDay(0);
+            
+            // Start Countdown
+            updateCountdown();
+            setInterval(updateCountdown, 60000);
+            
+            // Render Prep List
+            renderPrepList();
+        }
+
+        function updateCountdown() {
+            const tripStart = new Date('2025-12-26T00:00:00-09:00'); // Alaska Time
+            const now = new Date();
+            const diff = tripStart - now;
+            const banner = document.getElementById('countdown-banner');
+            if(diff > 0) {
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                banner.innerText = `距離阿拉斯加還有 ${days}天 ${hours}小時 ✈️`;
+                banner.style.opacity = '1'; 
+            } else if (diff > -7 * 24 * 60 * 60 * 1000) {
+                banner.innerText = "旅程進行中 ❄️";
+                banner.style.opacity = '1';
+            } else {
+                banner.style.display = 'none';
+            }
+        }
+
+        function switchDay(index) {
+            const data = daysData[index];
+            document.getElementById('header-title').innerText = data.title;
+            document.getElementById('header-subtitle').innerText = `${data.date} ${data.week}`;
+            document.getElementById('header-subtitle').style.color = data.color;
+            
+            // Update global current location for weather click
+            currentWeatherLoc = data.weatherLoc;
+            
+            document.querySelectorAll('.day-chip').forEach((chip, idx) => {
+                if (idx === index) { chip.classList.add('active'); chip.style.backgroundColor = data.color; } 
+                else { chip.classList.remove('active'); chip.style.backgroundColor = 'rgba(255,255,255,0.9)'; }
+            });
+
+            document.documentElement.style.setProperty('--theme-color', data.color);
+            document.getElementById('bg-itinerary').style.backgroundImage = `url('${data.bgImg}')`;
+
+            const container = document.getElementById('day-content');
+            
+            // Scroll to top of itinerary content
+            const itContent = document.getElementById('tab-itinerary');
+            if(itContent) itContent.scrollTop = 0;
+
+            let weatherGradient = `linear-gradient(135deg, ${data.color}dd 0%, ${data.color} 100%)`;
+            
+            let html = `
+                <a href="${data.mapUrl}" target="_blank" class="map-btn-compact animate-item">
+                    <i data-lucide="map-pin"></i> 查看今日路線地圖
+                </a>
+               
+                <!-- Weather Chart -->
+                <div id="day-weather-card" class="weather-detail-card animate-item" style="background: ${weatherGradient}" onclick="window.open('https://www.google.com/search?q=weather+${data.weatherLoc}','_blank')">
+                    <div class="wd-header">
+                        <span class="wd-title"><i data-lucide="cloud-snow"></i> 9 AM - 9 PM</span>
+                        <span class="wd-info" id="w-header-info">最高: --° | 最低: --°</span>
+                    </div>
+                    <div class="wd-title" style="font-size:11px; margin-top:-5px; margin-bottom:5px; opacity:0.8; padding-left:5px;">
+                        ${data.weatherLoc} 氣溫預測 (點擊詳情)
+                    </div>
+                    <div class="wd-chart-container">
+                        <div id="chart-icons-layer"></div>
+                        <svg class="wd-chart-svg" id="w-chart" style="width:100%; height:100%;"></svg>
+                    </div>
+                </div>
+
+                <!-- Aurora Chart -->
+                <div id="day-aurora-card" class="aurora-detail-card animate-item">
+                    <div class="wd-header">
+                        <span class="wd-title"><i data-lucide="sparkles"></i> 極光預報 (21:00-03:00)</span>
+                        <span class="wd-info" style="font-size:10px;">${data.weatherLoc.includes('Fairbanks') ? '高緯度區' : '中緯度區'}</span>
+                    </div>
+                    <div class="wd-title" style="font-size:11px; margin-top:-5px; margin-bottom:5px; opacity:0.9; padding-left:5px;">
+                        觀測指南: 綠柱高 + 白線低 = 最佳時機
+                    </div>
+                    
+                    <!-- Chart Area -->
+                    <div class="wd-chart-container" style="height:120px;">
+                        <svg class="wd-chart-svg" id="a-chart" style="width:100%; height:100%;"></svg>
+                    </div>
+
+                    <!-- Legend -->
+                    <div style="display:flex; justify-content:center; gap:15px; margin-top:10px; font-size:11px; opacity:0.9;">
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <div style="width:12px; height:12px; background:rgba(255,255,255,0.8); border-radius:2px;"></div>
+                            <span>KP極光強度 (高=強)</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <div style="width:12px; height:2px; background:white; border-top:2px dashed white;"></div>
+                            <span>雲層覆蓋 (低=清澈)</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            html += `<div class="card animate-item">`; 
+            data.content.forEach((item) => {
+                const safeName = item.name.replace(/'/g, "\\'").replace(/"/g, "&quot;"); 
+                const safeDesc = item.desc.replace(/'/g, "\\'").replace(/"/g, "&quot;"); 
+                const safeInfo = item.info.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "\\n");
+                html += `
+                    <div class="place-item" onclick="openModal('${safeName}', '${safeDesc}', '${safeInfo}')">
+                        <div class="place-header"><span class="place-name" style="color:${data.color}">${item.name}</span><span class="place-tag">${item.tag}</span></div>
+                        <p class="place-desc">${item.desc}</p>
+                    </div>`;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+            lucide.createIcons();
+            
+            // Fetch Weather
+            const today = new Date().toISOString().split('T')[0];
+            fetchDetailedWeather(data.coords, today); 
+            fetchCurrentWeather(data.coords, data.weatherLoc);
+        }
+
+        // Function to open weather from header
+        function openCurrentWeather() {
+            if(currentWeatherLoc) {
+                window.open(`https://www.google.com/search?q=weather+${currentWeatherLoc}`, '_blank');
+            }
+        }
+
+        // ... (Render Guide Functions - same as before) ...
+        function renderGuideScroller() {
+            const scroller = document.getElementById('guide-scroller');
+            scroller.innerHTML = '';
+            guideData.forEach((cat, index) => {
+                const chip = document.createElement('div');
+                chip.className = `guide-chip ${index === 0 ? 'active' : ''} animate-item`;
+                chip.innerText = cat.category;
+                chip.onclick = () => switchGuideCategory(index);
+                scroller.appendChild(chip);
+            });
+            switchGuideCategory(0);
+        }
+
+        function switchGuideCategory(index) {
+            const data = guideData[index];
+            const chips = document.querySelectorAll('.guide-chip');
+            chips.forEach((chip, idx) => {
+                if (idx === index) chip.classList.add('active');
+                else chip.classList.remove('active');
+            });
+
+            const container = document.getElementById('guide-content');
+            
+            // Handle "Prep" special case
+            if (data.id === 'prep') {
+                let html = `
+                    <div class="card animate-item" style="margin-top:10px;">
+                        <div class="packing-header">
+                            <div class="place-header"><span class="place-name">🎒 準備物品</span><span class="place-tag highlight" id="pack-count">0/0</span></div>
+                            <div class="progress-container"><div class="progress-bar" id="pack-progress"></div></div>
+                            <div class="progress-text"><span>完成度</span><span id="pack-percent">0%</span></div>
+                        </div>
+                        <div id="packing-list"></div>
+                    </div>
+                    <button class="btn-action animate-item" style="width:100%; justify-content:center; margin-top:20px; background:rgba(255,255,255,0.5);" onclick="resetPackingList(this)">重置清單</button>
+                `;
+                container.innerHTML = html;
+                renderPrepList(); 
+                return;
+            }
+
+            // Normal Guide Card Rendering
+            let html = `<div class="card animate-item" style="margin-top:10px;">`;
+            data.content.forEach(item => {
+                const safeName = item.name.replace(/'/g, "\\'").replace(/"/g, "&quot;"); 
+                const safeDesc = item.desc.replace(/'/g, "\\'").replace(/"/g, "&quot;"); 
+                const safeInfo = item.info.replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "\\n");
+                html += `
+                    <div class="place-item" onclick="openModal('${safeName}', '${safeDesc}', '${safeInfo}')">
+                        <div class="place-header"><span class="place-name">${item.name}</span><span class="place-tag secondary">${item.tag}</span></div>
+                        <p class="place-desc">${item.desc}</p>
+                    </div>`;
+            });
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        // --- PREP LIST LOGIC (Same as before) ---
+        function renderPrepList() {
+            const container = document.getElementById('packing-list');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            const savedState = JSON.parse(localStorage.getItem('alaskaTripPrep') || '{}');
+            let checkedCount = 0;
+
+            prepItems.forEach((item, index) => {
+                const isChecked = savedState[index] || false;
+                if(isChecked) checkedCount++;
+                
+                const div = document.createElement('div');
+                div.className = `checkbox-item ${isChecked ? 'checked' : ''}`;
+                div.onclick = () => toggleCheck(index);
+                div.innerHTML = `
+                    <div class="custom-checkbox"><i data-lucide="check" class="check-icon" size="16"></i></div>
+                    <span class="place-name" style="font-size:15px; font-weight:500;">${item}</span>
+                `;
+                container.appendChild(div);
+            });
+            
+            updateProgress(checkedCount, prepItems.length);
+            lucide.createIcons();
+        }
+
+        function toggleCheck(index) {
+            const savedState = JSON.parse(localStorage.getItem('alaskaTripPrep') || '{}');
+            savedState[index] = !savedState[index];
+            localStorage.setItem('alaskaTripPrep', JSON.stringify(savedState));
+            renderPrepList();
+        }
+
+        function updateProgress(checked, total) {
+            const percent = Math.round((checked / total) * 100);
+            const bar = document.getElementById('pack-progress');
+            const pText = document.getElementById('pack-percent');
+            const count = document.getElementById('pack-count');
+            
+            if(bar) bar.style.width = `${percent}%`;
+            if(pText) pText.innerText = `${percent}%`;
+            if(count) count.innerText = `${checked}/${total}`;
+        }
+
+        function resetPackingList(btnElement) {
+            if (btnElement.innerText === "重置清單") {
+                btnElement.innerText = "確定要重置？(點擊確認)";
+                btnElement.style.backgroundColor = "#ffeba1"; 
+                btnElement.style.color = "#d35400";
+                
+                setTimeout(() => {
+                    if (btnElement.innerText !== "重置清單" && btnElement.innerText !== "已完成重置") {
+                       btnElement.innerText = "重置清單";
+                       btnElement.style.backgroundColor = "rgba(255,255,255,0.5)";
+                       btnElement.style.color = "var(--theme-color)";
+                    }
+                }, 3000);
+                return;
+            }
+
+            localStorage.removeItem('alaskaTripPrep');
+            renderPrepList();
+            
+            btnElement.innerText = "已完成重置";
+            btnElement.style.backgroundColor = "#d4edda";
+            btnElement.style.color = "#155724";
+            
+            setTimeout(() => {
+                btnElement.innerText = "重置清單";
+                btnElement.style.backgroundColor = "rgba(255,255,255,0.5)";
+                btnElement.style.color = "var(--theme-color)";
+            }, 1500);
+        }
+
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.content-area').forEach(div => div.classList.remove('active'));
+            document.querySelectorAll('.tab-item').forEach(item => item.classList.remove('active'));
+            document.querySelectorAll('.bg-image').forEach(bg => bg.classList.remove('active'));
+
+            // Handle Weather Widget Visibility
+            const weatherWidget = document.querySelector('.weather-widget');
+            if (tabId === 'itinerary') {
+                if(weatherWidget) {
+                    weatherWidget.style.visibility = 'visible';
+                    weatherWidget.style.opacity = '1';
+                }
+            } else {
+                if(weatherWidget) {
+                    weatherWidget.style.opacity = '0';
+                    setTimeout(() => weatherWidget.style.visibility = 'hidden', 300);
+                }
+            }
+
+            // Handle Themes
+            if (tabId === 'itinerary') {
+                document.getElementById('bg-itinerary').classList.add('active');
+                const activeIndex = Array.from(document.querySelectorAll('.day-chip')).findIndex(c => c.classList.contains('active'));
+                switchDay(activeIndex !== -1 ? activeIndex : 0);
+            } else if (tabId === 'flights') {
+                document.getElementById('bg-flights').classList.add('active');
+                document.documentElement.style.setProperty('--theme-color', '#2980b9'); 
+                document.getElementById('header-title').innerText = "交通資訊";
+                document.getElementById('header-subtitle').innerText = "Flights & Car";
+                document.getElementById('header-subtitle').style.color = '#2980b9';
+            } else if (tabId === 'hotels') {
+                document.getElementById('bg-hotels').classList.add('active');
+                document.documentElement.style.setProperty('--theme-color', '#8e44ad'); 
+                document.getElementById('header-title').innerText = "住宿安排";
+                document.getElementById('header-subtitle').innerText = "Hotels";
+                document.getElementById('header-subtitle').style.color = '#8e44ad';
+            } else if (tabId === 'guide') {
+                document.getElementById('bg-guide').classList.add('active');
+                document.documentElement.style.setProperty('--theme-color', '#27ae60'); 
+                document.getElementById('header-title').innerText = "旅遊指南";
+                document.getElementById('header-subtitle').innerText = "Explore";
+                document.getElementById('header-subtitle').style.color = '#27ae60';
+                if(document.getElementById('guide-content').innerHTML === "") renderGuideScroller();
+            }
+
+            document.getElementById('tab-' + tabId).classList.add('active');
+            el.classList.add('active');
+        }
+
+        function openModal(title, subtitle, desc) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-desc').innerHTML = `<strong>${subtitle}</strong><br><br>${desc.replace(/\n/g, '<br>')}`;
+            document.getElementById('detail-modal').classList.add('open');
+        }
+        function closeModal() { document.getElementById('detail-modal').classList.remove('open'); }
+
+        async function fetchCurrentWeather(coords, locName) {
+            const [lat, long] = coords.split(',');
+            document.getElementById('current-loc').innerText = locName;
+            try {
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&current=temperature_2m&temperature_unit=celsius`;
+                const res = await fetch(url); const json = await res.json();
+                document.getElementById('current-temp').innerText = `${Math.round(json.current.temperature_2m)}°C`;
+            } catch (e) { console.error(e); }
+        }
+        
+        function getIconFromCode(code) {
+            if (code === 0) return 'sun';
+            if (code <= 3) return 'cloud-sun';
+            if (code <= 48) return 'cloud-fog';
+            if (code <= 67) return 'cloud-rain';
+            if (code <= 77) return 'snowflake';
+            if (code <= 82) return 'cloud-rain';
+            if (code <= 86) return 'snowflake';
+            return 'cloud-lightning'; // 95+
+        }
+
+        // 2. Detailed Weather & Cloud Cover Fetch
+        async function fetchDetailedWeather(coords, dateStr) {
+            const [lat, long] = coords.split(',');
+            
+            // Calculate tomorrow date for 2-day range (to cover night crossover)
+            const d = new Date(dateStr);
+            d.setDate(d.getDate() + 1);
+            const tomorrowStr = d.toISOString().split('T')[0];
+
+            try {
+                // Fetch 2 days of data: today and tomorrow
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${long}&daily=temperature_2m_max,temperature_2m_min,sunset&hourly=temperature_2m,weathercode,cloud_cover&start_date=${dateStr}&end_date=${tomorrowStr}&temperature_unit=celsius&timezone=auto`;
+                const res = await fetch(url); 
+                const json = await res.json();
+
+                if(json.daily && json.daily.temperature_2m_max) {
+                    const max = Math.round(json.daily.temperature_2m_max[0]);
+                    const min = Math.round(json.daily.temperature_2m_min[0]);
+                    let sunsetTime = "--:--";
+                    if(json.daily.sunset && json.daily.sunset[0]) {
+                        const dateObj = new Date(json.daily.sunset[0]);
+                        let hours = dateObj.getHours();
+                        const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+                        const ampm = hours >= 12 ? '下午' : '上午';
+                        hours = hours % 12;
+                        hours = hours ? hours : 12; 
+                        sunsetTime = `${ampm} ${hours}:${minutes}`;
+                    }
+                    const hlElement = document.getElementById('w-header-info');
+                    if(hlElement) hlElement.innerText = `最高:${max}° 最低:${min}° | 日落 ${sunsetTime}`;
+                }
+
+                if(json.hourly && json.hourly.temperature_2m) {
+                    // Weather Chart Data (Daytime 9AM - 9PM today)
+                    // Indices 9 to 21 (inclusive is 13 points, let's stick to current logic)
+                    const hoursTemp = json.hourly.temperature_2m.slice(9, 22); 
+                    const hoursCode = json.hourly.weathercode.slice(9, 22);
+                    currentHourlyTemps = hoursTemp;
+                    currentHourlyCodes = hoursCode; 
+                    drawChart(hoursTemp, hoursCode);
+
+                    // Aurora Chart Data (Nighttime 21:00 today - 03:00 tomorrow)
+                    // 21:00 is index 21. 03:00 tomorrow is index 27 (24+3).
+                    // Slice from 21 to 27 (6 hours: 21, 22, 23, 00, 01, 02)
+                    const nightClouds = json.hourly.cloud_cover.slice(21, 27);
+                    currentAuroraCloud = nightClouds;
+                    
+                    // Generate Mock KP based on Lat
+                    const latNum = parseFloat(lat);
+                    const isHighLat = latNum > 63; // Fairbanks is 64, Anchorage 61
+                    drawAuroraChart(nightClouds, isHighLat);
+                }
+            } catch (e) { 
+                console.error("Weather error", e); 
+                const card = document.getElementById('day-weather-card');
+                if(card) card.style.display = 'none'; 
+            }
+        }
+
+        // Draw Weather Chart (Line)
+        function drawChart(temps, codes) {
+            if (!temps || temps.length === 0) return;
+            const container = document.querySelector('.wd-chart-container');
+            const svg = document.getElementById('w-chart');
+            const iconsLayer = document.getElementById('chart-icons-layer');
+            if(!svg || !iconsLayer) return;
+
+            // Dynamic Width Calculation
+            const w = container.getBoundingClientRect().width || 300; 
+            const h = 150; 
+            
+            svg.innerHTML = ''; iconsLayer.innerHTML = ''; 
+            svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+
+            const padding = 20; 
+            const minTemp = Math.min(...temps) - 1;
+            const maxTemp = Math.max(...temps) + 1;
+            const range = maxTemp - minTemp;
+            const stepX = (w - padding * 2) / (temps.length - 1);
+            
+            // Adjusted margins
+            const chartTop = 40; const chartBottom = h - 30; const graphHeight = chartBottom - chartTop - 20; 
+
+            let points = ""; let circles = ""; let labels = ""; let timeLabels = "";
+            let areaPath = `M ${padding},${chartBottom} `;
+
+            temps.forEach((t, i) => {
+                const x = padding + i * stepX;
+                const y = chartBottom - ((t - minTemp) / range) * graphHeight;
+                points += `${x},${y} `; areaPath += `L ${x},${y} `;
+                
+                // Larger circles and text for better visibility
+                circles += `<circle cx="${x}" cy="${y}" r="4" class="chart-dot" />`;
+                labels += `<text x="${x}" y="${y - 15}" class="chart-text" style="font-size:14px;">${Math.round(t)}°</text>`;
+                
+                let timeVal = (9 + i);
+                let displayTime = timeVal > 12 ? (timeVal - 12) + "時" : (timeVal === 12 ? "中午" : timeVal + "時");
+                timeLabels += `<text x="${x}" y="${h - 5}" class="chart-label" style="font-size:12px;">${displayTime}</text>`;
+
+                if(codes && codes[i] !== undefined) {
+                    const iconName = getIconFromCode(codes[i]);
+                    const iconDiv = document.createElement('div');
+                    iconDiv.className = 'chart-icon-wrapper';
+                    iconDiv.style.left = `${x}px`; 
+                    iconDiv.style.top = '10px'; 
+                    iconDiv.innerHTML = `<i data-lucide="${iconName}" style="width:20px; height:20px;"></i>`;
+                    iconsLayer.appendChild(iconDiv);
+                }
+            });
+            areaPath += `L ${padding + (temps.length - 1) * stepX},${chartBottom} Z`;
+            svg.innerHTML = `<path d="${areaPath}" class="chart-area" /><polyline points="${points}" class="chart-line" />${circles}${labels}${timeLabels}`;
+            
+            // Re-run lucide for new icons
+            lucide.createIcons();
+        }
+
+        // NEW: Draw Aurora Chart (Bar + Line)
+        function drawAuroraChart(clouds, isHighLat) {
+            const svg = document.getElementById('a-chart');
+            if(!svg) return;
+            
+            // Dynamic Width Calculation
+            const container = svg.parentElement;
+            const w = container.getBoundingClientRect().width || 300; 
+            const h = 120;
+            
+            svg.innerHTML = '';
+            svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+
+            // Mock KP Data (6 data points: 21, 22, 23, 00, 01, 02)
+            const kpData = [];
+            for(let i=0; i<6; i++) {
+                const base = isHighLat ? 4 : 2;
+                const varVal = Math.floor(Math.random() * 3); // 0-2
+                kpData.push(base + varVal);
+            }
+
+            const stepX = w / 6;
+            const barWidth = stepX * 0.5; // Slightly narrower bars
+            const maxKP = 9;
+            
+            // Draw Bars (KP)
+            let bars = "";
+            let kpLabels = "";
+            kpData.forEach((kp, i) => {
+                const height = (kp / maxKP) * (h - 50);
+                const x = i * stepX + (stepX - barWidth)/2;
+                const y = h - 30 - height;
+                // Green color intensity based on KP
+                const opacity = 0.4 + (kp/10);
+                bars += `<rect x="${x}" y="${y}" width="${barWidth}" height="${height}" fill="rgba(255,255,255,${opacity})" rx="4" />`;
+                kpLabels += `<text x="${x + barWidth/2}" y="${y - 8}" font-size="12" fill="white" text-anchor="middle" font-weight="bold">KP${kp}</text>`;
+            });
+
+            // Draw Cloud Line
+            let cloudPath = "";
+            let cloudDots = "";
+            if (clouds && clouds.length > 0) {
+                // Normalize cloud 0-100 to y
+                clouds.forEach((c, i) => {
+                    if (i >= 6) return;
+                    const x = i * stepX + stepX/2;
+                    const y = h - 30 - (c / 100) * (h - 60); // slightly scale down
+                    if (i===0) cloudPath += `M ${x},${y} `;
+                    else cloudPath += `L ${x},${y} `;
+                    cloudDots += `<circle cx="${x}" cy="${y}" r="4" fill="white" stroke="#2E86C1" stroke-width="2" />`;
+                });
+            }
+
+            // Time Labels
+            let timeLabels = "";
+            const times = ["21:00", "22:00", "23:00", "00:00", "01:00", "02:00"];
+            times.forEach((t, i) => {
+                const x = i * stepX + stepX/2;
+                timeLabels += `<text x="${x}" y="${h - 5}" font-size="12" fill="rgba(255,255,255,0.9)" text-anchor="middle" font-weight="500">${t}</text>`;
+            });
+
+            svg.innerHTML = `
+                ${bars}
+                ${kpLabels}
+                <path d="${cloudPath}" fill="none" stroke="white" stroke-width="3" stroke-dasharray="6 4" />
+                ${cloudDots}
+                ${timeLabels}
+            `;
+        }
+
+        window.addEventListener('resize', () => { 
+            // Redraw both charts on resize
+            if(currentHourlyTemps.length > 0) drawChart(currentHourlyTemps, currentHourlyCodes);
+            if(currentAuroraCloud.length > 0) {
+                 // We need lat again to determine high lat, but for simplicity re-use logic
+                 const isFairbanks = document.getElementById('header-weather-widget').innerText.includes('Fairbanks');
+                 drawAuroraChart(currentAuroraCloud, isFairbanks); 
+            }
+        });
+        window.onload = renderDays;
+    </script>
+</body>
+</html>

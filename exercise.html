@@ -474,40 +474,6 @@
                 return () => window.removeEventListener('scroll', handleScroll);
             }, []);
 
-            // Generate PWA Icon
-            useEffect(() => {
-                const generateAppIcon = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 512;
-                    canvas.height = 512;
-                    const ctx = canvas.getContext('2d');
-                    if (ctx) {
-                        const gradient = ctx.createLinearGradient(0, 0, 0, 512);
-                        gradient.addColorStop(0, '#2563EB'); 
-                        gradient.addColorStop(1, '#1E40AF'); 
-                        ctx.fillStyle = gradient;
-                        ctx.fillRect(0, 0, 512, 512);
-                        ctx.fillStyle = '#FFFFFF';
-                        ctx.font = 'bold 320px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText('7', 256, 270);
-                        return canvas.toDataURL('image/png');
-                    }
-                    return '';
-                };
-                const iconUrl = generateAppIcon();
-                if (iconUrl) {
-                    let linkIcon = document.querySelector('link[rel="apple-touch-icon"]');
-                    if (!linkIcon) {
-                        linkIcon = document.createElement('link');
-                        linkIcon.rel = 'apple-touch-icon';
-                        document.head.appendChild(linkIcon);
-                    }
-                    linkIcon.href = iconUrl;
-                }
-            }, []);
-
             // LocalStorage Logic
             useEffect(() => {
                 try {

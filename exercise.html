@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>每日長壽運動 7 式</title>
+    
+    <!-- PWA Settings -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    padding: {
+                        'safe-top': 'env(safe-area-inset-top)',
+                        'safe-bottom': 'env(safe-area-inset-bottom)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Dependencies -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        body { -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        .animate-in { animation: fadeIn 0.2s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Icons Components (內建 SVG) ---
+        const IconBase = ({ children, size = 24, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {children}
+            </svg>
+        );
+
+        const Icons = {
+            Check: (p) => <IconBase {...p}><polyline points="20 6 9 17 4 12" /></IconBase>,
+            Trophy: (p) => <IconBase {...p}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></IconBase>,
+            RotateCcw: (p) => <IconBase {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></IconBase>,
+            ChevronDown: (p) => <IconBase {...p}><polyline points="6 9 12 15 18 9"/></IconBase>,
+            ChevronUp: (p) => <IconBase {...p}><polyline points="18 15 12 9 6 15"/></IconBase>,
+            Activity: (p) => <IconBase {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></IconBase>,
+            Clock: (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconBase>,
+            AlertCircle: (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></IconBase>,
+            Dumbbell: (p) => <IconBase {...p}><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></IconBase>,
+            Heart: (p) => <IconBase {...p}><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></IconBase>,
+            Share: (p) => <IconBase {...p}><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></IconBase>,
+            X: (p) => <IconBase {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></IconBase>,
+            ArrowDownToLine: (p) => <IconBase {...p}><path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/></IconBase>,
+            ArrowUpFromLine: (p) => <IconBase {...p}><path d="m18 9-6-6-6 6"/><path d="M12 3v14"/><path d="M5 21h14"/></IconBase>,
+            ArrowDown: (p) => <IconBase {...p}><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></IconBase>,
+            Scale: (p) => <IconBase {...p}><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></IconBase>,
+            Zap: (p) => <IconBase {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></IconBase>,
+            Footprints: (p) => <IconBase {...p}><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 11 3.8 11 8c0 2.5-1.03 3.5-1 5.62V16a2 2 0 0 1-2 2 2 2 0 0 1-2-2Z"/><path d="M14 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C8.63 6 7 7.8 7 12c0 2.5 1.03 3.5 1 5.62V20a2 2 0 0 0 2 2 2 2 0 0 0 2-2Z"/></IconBase>,
+            Timer: (p) => <IconBase {...p}><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></IconBase>,
+            Maximize: (p) => <IconBase {...p}><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></IconBase>,
+            Anchor: (p) => <IconBase {...p}><circle cx="12" cy="5" r="3"/><line x1="12" x2="12" y1="22" y2="8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/></IconBase>,
+            TrendingUp: (p) => <IconBase {...p}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></IconBase>,
+            ChevronsDown: (p) => <IconBase {...p}><path d="m7 6 5 5 5-5"/><path d="m7 13 5 5 5-5"/></IconBase>,
+            ArrowDownCircle: (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="m8 12 4 4 4-4"/></IconBase>
+        };
+
+        // --- Data ---
+        const longevityExercises = [
+          {
+            id: 1,
+            title: "伏地挺身",
+            desc: "40歲後心臟健康指標",
+            target: "目標：連續 40 下",
+            tips: ["手肘保持 45 度角", "核心收緊不塌腰", "胸口貼近地面"],
+            detail: "根據研究，能做 40 下伏地挺身的男性，心血管疾病風險顯著較低。這能強化胸肌、三頭肌與核心穩定。",
+            intensity: "高強度",
+            color: "from-blue-500 to-blue-600",
+            bgIcon: "bg-blue-100 text-blue-600",
+            Icon: Icons.ArrowDownToLine
+          },
+          {
+            id: 2,
+            title: "引體向上 / 懸吊",
+            desc: "握力與壽命相關",
+            target: "懸吊 30秒 或 10下",
+            tips: ["手臂完全伸直懸掛", "肩胛骨下沉", "不靠慣性擺盪"],
+            detail: "握力強弱與老年生活品質高度相關。如果拉不上去，練習「懸吊 (Dead Hang)」30秒也非常有效。",
+            intensity: "高強度",
+            color: "from-indigo-500 to-indigo-600",
+            bgIcon: "bg-indigo-100 text-indigo-600",
+            Icon: Icons.ArrowUpFromLine
+          },
+          {
+            id: 3,
+            title: "單腿板凳蹲",
+            desc: "預防跌倒關鍵",
+            target: "每邊 10 下",
+            tips: ["慢慢坐下", "膝蓋對齊腳尖", "另一腳不碰地"],
+            detail: "無法單腳站立 10 秒的人，死亡風險較高。此動作模擬坐下與站起，強化股四頭肌與平衡。",
+            intensity: "中強度",
+            color: "from-purple-500 to-purple-600",
+            bgIcon: "bg-purple-100 text-purple-600",
+            Icon: Icons.ArrowDown
+          },
+          {
+            id: 4,
+            title: "單腿硬舉",
+            desc: "改善背痛與後側鏈",
+            target: "每邊 10 下",
+            tips: ["背部打直", "髖部向後推", "支撐腳微彎"],
+            detail: "現代人久坐導致臀腿無力。這能平衡左右肌力，強化腿後側鏈，減少下背疼痛風險。",
+            intensity: "中強度",
+            color: "from-pink-500 to-pink-600",
+            bgIcon: "bg-pink-100 text-pink-600",
+            Icon: Icons.Scale
+          },
+          {
+            id: 5,
+            title: "深蹲跳",
+            desc: "維持爆發力",
+            target: "10-15 下",
+            tips: ["落地輕盈無聲", "落地時膝蓋彎曲", "用臀部發力跳起"],
+            detail: "40歲後爆發力流失速度比肌力快。維持爆發力能讓你在快跌倒時迅速反應，保持敏捷。",
+            intensity: "高強度",
+            color: "from-orange-500 to-orange-600",
+            bgIcon: "bg-orange-100 text-orange-600",
+            Icon: Icons.Zap
+          },
+          {
+            id: 6,
+            title: "單腳跳停",
+            desc: "骨質密度與協調",
+            target: "跳躍後穩住 2秒",
+            tips: ["跳躍->落地->黏住", "核心用力", "身體不晃動"],
+            detail: "高衝擊運動能增加骨質密度。訓練大腦精準控制肢體煞車，有效預防運動傷害。",
+            intensity: "中強度",
+            color: "from-teal-500 to-teal-600",
+            bgIcon: "bg-teal-100 text-teal-600",
+            Icon: Icons.Footprints
+          },
+          {
+            id: 7,
+            title: "分腿蹲靜態",
+            desc: "下肢極致穩定",
+            target: "保持 30-60 秒",
+            tips: ["後膝離地3公分", "身體正直不前傾", "骨盆擺正"],
+            detail: "等長收縮 (Isometric) 能建立強大的關節穩定性，並伸展緊繃的髖屈肌，適合久坐族。",
+            intensity: "低強度",
+            color: "from-red-500 to-red-600",
+            bgIcon: "bg-red-100 text-red-600",
+            Icon: Icons.Timer
+          }
+        ];
+
+        const stretchingExercises = [
+          {
+            id: 101,
+            title: "全身與背部拉伸",
+            desc: "拉開身體架構",
+            target: "牆角開胸 / 體側伸展",
+            tips: ["前臂抵牆角重心前移", "手插腰側彎拉開側腹", "改善含胸駝背"],
+            detail: "【牆角開胸】找個門框，雙手抵住兩側，重心前移拉開胸肌。【站姿體側伸展】一手插腰，一手向上延伸側彎。先做這個把身體架構拉開。",
+            intensity: "放鬆",
+            color: "from-emerald-400 to-emerald-600",
+            bgIcon: "bg-emerald-100 text-emerald-600",
+            Icon: Icons.Maximize
+          },
+          {
+            id: 102,
+            title: "臀部放鬆 (4字型)",
+            desc: "減輕大腿負擔",
+            target: "左右各 30-60 秒",
+            tips: ["腳踝跨在膝蓋上", "背打直前傾", "腳尖勾起保護膝蓋"],
+            detail: "腿部痠痛往往跟臀部緊繃有關。坐在椅子上，將腳踝跨在另一膝上（呈數字4），背打直慢慢前傾，感受屁股深處的酸爽。",
+            intensity: "放鬆",
+            color: "from-cyan-400 to-cyan-600",
+            bgIcon: "bg-cyan-100 text-cyan-600",
+            Icon: Icons.Anchor
+          },
+          {
+            id: 103,
+            title: "大腿前側與髖部",
+            desc: "放鬆久坐緊繃",
+            target: "左右各 30-60 秒",
+            tips: ["扶椅背單手抓腳踝", "夾屁股骨盆前頂", "拉伸大腿根部"],
+            detail: "一手扶椅背保持平衡，一手抓同側腳踝後拉。進階技巧：拉住腳踝時「夾屁股」，能拉到大腿前側靠近根部的地方。",
+            intensity: "伸展",
+            color: "from-sky-400 to-sky-600",
+            bgIcon: "bg-sky-100 text-sky-600",
+            Icon: Icons.TrendingUp
+          },
+          {
+            id: 104,
+            title: "大腿後側與外側",
+            desc: "舒緩久站痠痛",
+            target: "勾腳尖 / 交叉腿",
+            tips: ["腳跟著地屁股後推", "背部不要拱", "交叉腿前彎拉外側"],
+            detail: "【勾腳尖翹臀】一腳前跨勾腳尖，屁股後推（像要坐下）。【交叉腿前彎】雙腳交叉站立後彎腰摸地，拉伸大腿外側（髂脛束）。",
+            intensity: "伸展",
+            color: "from-rose-400 to-rose-600",
+            bgIcon: "bg-rose-100 text-rose-600",
+            Icon: Icons.ChevronsDown
+          },
+          {
+            id: 105,
+            title: "深度小腿放鬆",
+            desc: "對付頑固痠痛",
+            target: "踩階梯下壓",
+            tips: ["找階梯腳跟懸空下沉", "膝蓋直拉小腿肚", "膝蓋彎拉比目魚肌"],
+            detail: "比推牆更深層！前腳掌踩階梯邊緣，腳跟慢慢下沉。記得「膝蓋打直」和「膝蓋微彎」兩種都要做，分別放鬆不同肌肉。",
+            intensity: "深層",
+            color: "from-amber-400 to-amber-600",
+            bgIcon: "bg-amber-100 text-amber-600",
+            Icon: Icons.ArrowDownCircle
+          }
+        ];
+
+        // --- Main App Component ---
+        function App() {
+            const [activeTab, setActiveTab] = useState('longevity');
+            const [completed, setCompleted] = useState({});
+            const [expanded, setExpanded] = useState(null);
+            const [showResetConfirm, setShowResetConfirm] = useState(false);
+            const [showInstallGuide, setShowInstallGuide] = useState(false);
+
+            const currentData = activeTab === 'longevity' ? longevityExercises : stretchingExercises;
+
+            // Generate PWA Icon
+            useEffect(() => {
+                const generateAppIcon = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 512;
+                    canvas.height = 512;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        const gradient = ctx.createLinearGradient(0, 0, 0, 512);
+                        gradient.addColorStop(0, '#2563EB'); 
+                        gradient.addColorStop(1, '#1E40AF'); 
+                        ctx.fillStyle = gradient;
+                        ctx.fillRect(0, 0, 512, 512);
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.font = 'bold 320px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('7', 256, 270);
+                        return canvas.toDataURL('image/png');
+                    }
+                    return '';
+                };
+                const iconUrl = generateAppIcon();
+                if (iconUrl) {
+                    let linkIcon = document.querySelector('link[rel="apple-touch-icon"]');
+                    if (!linkIcon) {
+                        linkIcon = document.createElement('link');
+                        linkIcon.rel = 'apple-touch-icon';
+                        document.head.appendChild(linkIcon);
+                    }
+                    linkIcon.href = iconUrl;
+
+                    let linkFav = document.querySelector('link[rel="icon"]');
+                    if (!linkFav) {
+                        linkFav = document.createElement('link');
+                        linkFav.rel = 'icon';
+                        document.head.appendChild(linkFav);
+                    }
+                    linkFav.href = iconUrl;
+                }
+            }, []);
+
+            // LocalStorage Logic
+            useEffect(() => {
+                try {
+                    const saved = localStorage.getItem('dailyFitnessV9');
+                    if (saved) {
+                        const { date, data } = JSON.parse(saved);
+                        if (date === new Date().toDateString()) {
+                            setCompleted(data);
+                        }
+                    }
+                } catch (e) { console.error(e); }
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem('dailyFitnessV9', JSON.stringify({
+                    date: new Date().toDateString(),
+                    data: completed
+                }));
+            }, [completed]);
+
+            const toggle = (id, e) => {
+                e?.stopPropagation();
+                const isNowDone = !completed[id];
+                setCompleted(prev => ({ ...prev, [id]: isNowDone }));
+                
+                if (isNowDone) {
+                    const currentIds = currentData.map(ex => ex.id);
+                    const otherDoneCount = currentIds.filter(cid => cid !== id && completed[cid]).length;
+                    if (otherDoneCount === currentIds.length - 1) {
+                        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, zIndex: 100 });
+                    }
+                }
+            };
+
+            const handleReset = () => {
+                const currentIds = currentData.map(e => e.id);
+                setCompleted(prev => {
+                    const newState = { ...prev };
+                    currentIds.forEach(id => delete newState[id]);
+                    return newState;
+                });
+                setExpanded(null);
+                setShowResetConfirm(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            const currentCompletedCount = currentData.filter(ex => completed[ex.id]).length;
+            const progress = Math.round((currentCompletedCount / currentData.length) * 100);
+            const todayStr = new Date().toLocaleDateString('zh-TW', { month: 'long', day: 'numeric' });
+
+            return (
+                <div className="min-h-screen bg-gray-50 pb-24 selection:bg-indigo-100">
+                    {/* Header */}
+                    <div className="bg-white/90 sticky top-0 z-30 shadow-sm border-b border-gray-100/50 backdrop-blur-xl pt-safe-top">
+                        <div className="max-w-md mx-auto px-5 py-4">
+                            <div className="flex justify-between items-center mb-4">
+                                <div>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">{todayStr} • 每日計畫</p>
+                                    <h1 className="text-2xl font-black text-gray-900 tracking-tight">
+                                        {activeTab === 'longevity' ? '長壽運動 7 式' : '全身伸展放鬆'}
+                                    </h1>
+                                </div>
+                                <div className="flex gap-3 items-center">
+                                    <button onClick={() => setShowInstallGuide(true)} className="w-10 h-10 rounded-full bg-gray-50 text-gray-500 hover:bg-gray-100 flex items-center justify-center transition-colors">
+                                        <Icons.Share size={18} />
+                                    </button>
+                                    <div className="relative w-10 h-10">
+                                        <svg className="w-full h-full transform -rotate-90">
+                                            <circle cx="20" cy="20" r="16" stroke="#f3f4f6" strokeWidth="4" fill="none" />
+                                            <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="4" fill="none" strokeDasharray="100" strokeDashoffset={100 - progress} strokeLinecap="round" className={`transition-all duration-700 ease-out ${activeTab === 'longevity' ? 'text-blue-500' : 'text-emerald-500'}`} />
+                                        </svg>
+                                        <span className={`absolute inset-0 flex items-center justify-center text-[10px] font-bold ${activeTab === 'longevity' ? 'text-blue-500' : 'text-emerald-500'}`}>{progress}%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Tabs */}
+                            <div className="flex p-1 bg-gray-100 rounded-xl relative">
+                                <button onClick={() => { setActiveTab('longevity'); setExpanded(null); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 z-10 ${activeTab === 'longevity' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
+                                    <Icons.Dumbbell size={14} /> 長壽訓練
+                                </button>
+                                <button onClick={() => { setActiveTab('stretching'); setExpanded(null); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 z-10 ${activeTab === 'stretching' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}>
+                                    <Icons.Heart size={14} /> 伸展修復
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <main className="max-w-md mx-auto px-4 pt-6 space-y-4">
+                        {progress === 0 && (
+                            <div className={`rounded-3xl p-6 text-white shadow-xl mb-6 bg-gradient-to-br ${activeTab === 'longevity' ? 'from-blue-600 to-indigo-700' : 'from-emerald-500 to-teal-600'}`}>
+                                <div className="flex items-start justify-between mb-2">
+                                    <div>
+                                        <h2 className="text-lg font-bold mb-1">{activeTab === 'longevity' ? '今日挑戰開始！' : '讓身體放鬆一下'}</h2>
+                                        <p className="text-white/80 text-xs leading-relaxed max-w-[240px]">
+                                            {activeTab === 'longevity' ? '這 7 個動作是檢測身體老化程度的關鍵指標。依序完成它們吧！' : '按照順序：先拉開身體架構，再放鬆大肌群，最後處理末梢痠痛。'}
+                                        </p>
+                                    </div>
+                                    <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm"><Icons.Activity size={20} className="text-white" /></div>
+                                </div>
+                            </div>
+                        )}
+
+                        {currentData.map((ex) => {
+                            const isDone = completed[ex.id];
+                            const isExpanded = expanded === ex.id;
+                            const CurrentIcon = ex.Icon || Icons.Dumbbell;
+
+                            return (
+                                <div key={ex.id} onClick={() => setExpanded(isExpanded ? null : ex.id)} className={`relative bg-white rounded-2xl shadow-[0_2px_15px_-4px_rgba(0,0,0,0.05)] border border-gray-100 overflow-hidden transition-all duration-300 cursor-pointer ${isExpanded ? 'ring-2 ring-offset-2 ring-gray-200 shadow-xl z-10' : 'hover:-translate-y-0.5'} ${isDone ? 'opacity-60 bg-gray-50' : ''}`}>
+                                    <div className="p-4 flex items-center gap-4">
+                                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm transition-transform duration-300 ${ex.bgIcon} ${isExpanded ? 'scale-110' : ''}`}>
+                                            <CurrentIcon size={24} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${isDone ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-white text-gray-500 border-gray-200'}`}>{ex.intensity}</span>
+                                                {isDone && <span className="text-[10px] font-bold text-green-500 flex items-center gap-0.5"><Icons.Check size={10} strokeWidth={3}/> 完成</span>}
+                                            </div>
+                                            <h3 className={`text-base font-bold text-gray-900 leading-tight ${isDone && 'line-through text-gray-400'}`}>{ex.title}</h3>
+                                            <p className="text-xs text-gray-400 font-medium truncate mt-0.5">{ex.desc}</p>
+                                        </div>
+                                        <div className="flex-shrink-0">
+                                            {!isExpanded ? (
+                                                <button onClick={(e) => toggle(ex.id, e)} className={`w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90 ${isDone ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-300 hover:bg-gray-200'}`}>
+                                                    {isDone ? <Icons.Check size={20} strokeWidth={3} /> : <div className="w-5 h-5 rounded-full border-2 border-gray-300"></div>}
+                                                </button>
+                                            ) : (
+                                                <Icons.ChevronUp size={20} className="text-gray-300 mr-2" />
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className={`transition-all duration-500 ease-in-out ${isExpanded ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                                        <div className="px-5 pb-6 pt-0">
+                                            <div className={`h-1 w-16 rounded-full mb-4 bg-gradient-to-r ${ex.color}`}></div>
+                                            <div className="space-y-4">
+                                                <div className="flex items-start gap-3 bg-gray-50 p-3 rounded-xl">
+                                                    <Icons.Clock size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                                                    <div>
+                                                        <p className="text-xs font-bold text-gray-400 uppercase">目標 / 時間</p>
+                                                        <p className="text-sm font-semibold text-gray-800">{ex.target}</p>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-gray-400 uppercase mb-2">動作要點</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {ex.tips.map((tip, i) => (
+                                                            <span key={i} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md border border-gray-200 font-medium">{tip}</span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className="text-sm text-gray-600 leading-relaxed">
+                                                    <span className={`font-bold ${activeTab === 'longevity' ? 'text-blue-600' : 'text-emerald-600'}`}>指導：</span>
+                                                    {ex.detail}
+                                                </div>
+                                                <button onClick={(e) => { toggle(ex.id, e); setTimeout(() => setExpanded(null), 200); }} className={`w-full py-3.5 rounded-xl font-bold text-sm shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 text-white ${isDone ? 'bg-gray-400 shadow-none' : `bg-gradient-to-r ${ex.color} shadow-lg`}`}>
+                                                    {isDone ? '取消完成' : '完成'} 
+                                                    {!isDone && <Icons.Check size={16} />}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        <div className="h-6"></div>
+                        <button onClick={() => setShowResetConfirm(true)} className="w-full py-3 text-gray-300 text-xs font-bold flex items-center justify-center hover:text-gray-500 transition-colors">
+                            <Icons.RotateCcw size={12} className="mr-2" /> 重置本頁進度
+                        </button>
+                    </main>
+
+                    {/* Install Guide Modal */}
+                    {showInstallGuide && (
+                        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4">
+                            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setShowInstallGuide(false)}></div>
+                            <div className="bg-white w-full max-w-sm rounded-[2rem] p-6 relative z-10 shadow-2xl animate-in">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-bold text-gray-900">安裝到主畫面</h3>
+                                    <button onClick={() => setShowInstallGuide(false)} className="p-1 bg-gray-100 rounded-full text-gray-500"><Icons.X size={20}/></button>
+                                </div>
+                                <div className="space-y-6">
+                                    <div className="flex gap-4 items-start">
+                                        <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold flex-shrink-0">1</div>
+                                        <div>
+                                            <p className="text-sm text-gray-700 font-medium mb-1">點擊瀏覽器底部的「分享」按鈕</p>
+                                            <div className="flex justify-center py-2 text-blue-500"><Icons.Share /></div>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-4 items-start">
+                                        <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold flex-shrink-0">2</div>
+                                        <div><p className="text-sm text-gray-700 font-medium mb-1">往下滑動選單，找到並點擊</p><p className="text-sm font-bold text-gray-900">「加入主畫面」</p></div>
+                                    </div>
+                                    <div className="flex gap-4 items-start">
+                                        <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold flex-shrink-0">3</div>
+                                        <div><p className="text-sm text-gray-700 font-medium">點擊右上角的「加入」即可！</p></div>
+                                    </div>
+                                </div>
+                                <button onClick={() => setShowInstallGuide(false)} className="w-full mt-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200">知道了</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Reset Confirm Modal */}
+                    {showResetConfirm && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+                            <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowResetConfirm(false)}></div>
+                            <div className="bg-white rounded-3xl p-6 w-full max-w-sm relative z-10 shadow-2xl animate-in">
+                                <div className="flex flex-col items-center text-center">
+                                    <div className="w-12 h-12 bg-gray-100 text-gray-500 rounded-full flex items-center justify-center mb-4"><Icons.AlertCircle size={24} /></div>
+                                    <h3 className="text-lg font-bold text-gray-900 mb-2">確定重置？</h3>
+                                    <p className="text-sm text-gray-500 mb-6">這將會清除「{activeTab === 'longevity' ? '長壽訓練' : '伸展修復'}」的打卡紀錄。</p>
+                                    <div className="flex gap-3 w-full">
+                                        <button onClick={() => setShowResetConfirm(false)} className="flex-1 py-3 bg-gray-100 rounded-xl font-bold text-gray-600 text-sm">取消</button>
+                                        <button onClick={handleReset} className="flex-1 py-3 bg-red-500 rounded-xl font-bold text-white text-sm shadow-lg shadow-red-200">確定重置</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
